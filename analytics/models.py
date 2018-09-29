@@ -8,7 +8,7 @@ from django.conf import settings
 
 class Question(models.Model):
     text = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=False)
 
     # def __unicode__(self):
     #     result = '{0} {1}'.format(
