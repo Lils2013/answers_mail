@@ -53,14 +53,18 @@ def tag_detail(request, pk):
 def graph(request, pk):
 
     try:
-        questions = Tag.objects.get(pk=pk).questions.all()
+        questions = Tag.objects.get(pk=pk).questions.all().order_by('-created_at')
     except Tag.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
         data = {}
         for question in questions:
-            data[question.id] = question.id
+            if not data.has_key(question.created_at.date().isoformat()):
+                data[question.created_at.date().isoformat()] = 1
+            else:
+                data[question.created_at.date().isoformat()] = data[question.created_at.date().isoformat()] + 1
+
         print(data)
         return Response(data)
 
