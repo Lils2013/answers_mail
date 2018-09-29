@@ -7,6 +7,12 @@ from serializers import TagSerializer
 
 
 class TagViewSet(ReadOnlyModelViewSet):
-    queryset = Tag.objects.all().order_by('-created')
+    queryset = Tag.objects.all().order_by('-created_at')
+    serializer_class = TagSerializer
+    permission_classes = (ReadOnly, )
+
+
+class QuestionsViewSet(ReadOnlyModelViewSet):
+    queryset = Tag.objects.all().order_by('-created_at')
     serializer_class = TagSerializer
     permission_classes = (ReadOnly, )

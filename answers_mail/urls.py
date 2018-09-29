@@ -17,10 +17,15 @@ from django.conf.urls import include, url
 from django.contrib import admin
 from .routers import router
 from django.views.generic import TemplateView
+from analytics.views import import_data
 
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^api/', include(router.urls)),
     url(r'^answers/', TemplateView.as_view(template_name='index.html')),
+    url(r'^import/$', import_data),
+    url(r'^import/(?P<page_from>\d+)$', import_data),
+    url(r'^import/(?P<page_from>\d+)-(?P<page_to>\d+)$', import_data),
+
 ]
