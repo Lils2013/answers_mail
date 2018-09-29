@@ -35,7 +35,8 @@ def import_one(page_from):
     print('importing from {}'.format(page_from))
     if r.status_code == 200:
         data = r.json()
-        question_text = data['qtext']
+        question_text = data['qtext'] + ' ' + data['qcomment']
+
         bad_date = int(data['added'])
         ok_date = roundTime(datetime.datetime.fromtimestamp(time.mktime(now.timetuple()) - bad_date), 60 * 60 * 24)
         tag_list = data['category']['name']
