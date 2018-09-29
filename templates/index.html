@@ -12,7 +12,7 @@
 <div id="starting">
     <div class="container">
         <div class="row">
-            <h1>List of Questions
+            <h1>List of Popular tags
                 <button class="btn btn-success">ADD ARTICLE</button>
             </h1>
             <table class="table">
@@ -28,7 +28,7 @@
                     <th scope="row">${tag.id}</th>
                     <td>${tag.text}</td>
                     <td>
-                        <button class="btn btn-info" v-on:click="getTag(tag.id)">${tag.id}</button>
+                        <button class="btn btn-info" v-on:click="getTag(tag.id)">View Details</button>
                         {#                  <button class="btn btn-danger" v-on:click="deleteArticle(article.article_id)">Delete</button>#}
                     </td>
                 </tr>
@@ -44,6 +44,7 @@
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
+
 {#                        <form v-on:submit.prevent="updateArticle()">#}
 {#                            <div class="modal-body">#}
 {#                                <div class="form-group">#}
@@ -80,7 +81,14 @@
         </div>
     </div>
     <div class="loading" v-if="loading===true">Loading&#8230;</div>
+      <line-chart :data="chartData"></line-chart>
+
 </div>
+{#<div id="app">#}
+{#  <line-chart :data="chartData"></line-chart>#}
+{#</div>#}
+
+
 <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
         integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
         crossorigin="anonymous"></script>
@@ -93,6 +101,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/vue@2.5.13/dist/vue.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/vue-resource@1.3.5"></script>
+<script src="https://unpkg.com/chart.js@2.7.2/dist/Chart.bundle.js"></script>
+<script src="https://unpkg.com/vue-chartkick@0.5.0"></script>
 <script type="text/javascript">
     new Vue({
         el: '#starting',
@@ -103,6 +113,7 @@
             currentTag: {},
             message: null,
             newArticle: {'article_heading': null, 'article_body': null},
+            chartData: [["Jan", 4], ["Feb", 2], ["Mar", 10], ["Apr", 5], ["May", 3]],
         },
         mounted: function () {
             this.getTags();
@@ -125,7 +136,8 @@
                 this.$http.get(`/api/tag/${id}/`)
                     .then((response) => {
                         this.currentArticle = response.data;
-                        $("#editArticleModal").modal('show');
+                        {#$("#editArticleModal").modal('show');#}
+                        this.chartData = [["AAA", 4], ["A", 2], ["Mar", 10], ["Apr", 5], ["May", 3]],
                         this.loading = false;
                     })
                     .catch((err) => {
@@ -134,7 +146,8 @@
                     })
             },
         }
-    });
+
+  });
 
 </script>
 </body>
