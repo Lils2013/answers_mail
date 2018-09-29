@@ -6,5 +6,5 @@ from django.contrib import admin
 # Register your models here.
 from answers.models import Question, Tag
 
-admin.site.register(Question)
-admin.site.register(Tag)
+# admin.site.register(Question)
+# admin.site.register(Tag)

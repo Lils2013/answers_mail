@@ -7,7 +7,13 @@ import datetime, time
 import requests
 from analytics.models import Question, Tag
 import json
+from rest_framework import status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 # Create your views here.
+from analytics.api.serializers import QuestionSerializer
+from analytics.models import Question, Tag
+import json
 
 
 
@@ -80,3 +86,34 @@ def import_data(request, page_from = -1, page_to = -1):
                 print('failed importing page {}'. format(i))
                 pass
     return HttpResponse(html)
+
+@api_view(['GET'])
+def tag_detail(request, pk):
+    """
+    Retrieve, update or delete a code snippet.
+    """
+    try:
+        questions = Tag.objects.get(pk=pk).questions.all()
+    except Tag.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = QuestionSerializer(questions, many=True)
+        return Response(serializer.data)
+
+
+@api_view(['GET'])
+def graph(request, pk):
+
+    try:
+        questions = Tag.objects.get(pk=pk).questions.all()
+    except Tag.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        data = {}
+        for question in questions:
+            data[question.id] = question.id
+        print(data)
+        return Response(data)
+
