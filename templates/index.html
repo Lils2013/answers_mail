@@ -13,7 +13,6 @@
     <div class="container">
         <div class="row">
             <h1>List of Popular tags
-                <button class="btn btn-success">ADD ARTICLE</button>
             </h1>
             <table class="table">
                 <thead>
@@ -45,43 +44,57 @@
                             </button>
                         </div>
 
-{#                        <form v-on:submit.prevent="updateArticle()">#}
-{#                            <div class="modal-body">#}
-{#                                <div class="form-group">#}
-{#                                    <label for="article_heading">Article Heading</label>#}
-{#                                    <input#}
-{#                                            type="text"#}
-{#                                            class="form-control"#}
-{#                                            id="article_heading"#}
-{#                                            placeholder="Enter Article Heading"#}
-{#                                            v-model="currentArticle.article_heading"#}
-{#                                            required="required">#}
-{#                                </div>#}
-{#                                <div class="form-group">#}
-{#                                    <label for="article_body">Article Body</label>#}
-{#                                    <textarea#}
-{#                                            class="form-control"#}
-{#                                            id="article_body"#}
-{#                                            placeholder="Enter Article Body"#}
-{#                                            v-model="currentArticle.article_body"#}
-{#                                            required="required"#}
-{#                                            rows="3"></textarea>#}
-{#                                </div>#}
-{#                            </div>#}
-{#                            <div class="modal-footer">#}
-{#                                <button type="button" class="btn btn-secondary m-progress" data-dismiss="modal">Close#}
-{#                                </button>#}
-{#                                <button type="submit" class="btn btn-primary">Save changes</button>#}
-{#                            </div>#}
-{#                        </form>#}
+                        {#                        <form v-on:submit.prevent="updateArticle()">#}
+                        {#                            <div class="modal-body">#}
+                        {#                                <div class="form-group">#}
+                        {#                                    <label for="article_heading">Article Heading</label>#}
+                        {#                                    <input#}
+                        {#                                            type="text"#}
+                        {#                                            class="form-control"#}
+                        {#                                            id="article_heading"#}
+                        {#                                            placeholder="Enter Article Heading"#}
+                        {#                                            v-model="currentArticle.article_heading"#}
+                        {#                                            required="required">#}
+                        {#                                </div>#}
+                        {#                                <div class="form-group">#}
+                        {#                                    <label for="article_body">Article Body</label>#}
+                        {#                                    <textarea#}
+                        {#                                            class="form-control"#}
+                        {#                                            id="article_body"#}
+                        {#                                            placeholder="Enter Article Body"#}
+                        {#                                            v-model="currentArticle.article_body"#}
+                        {#                                            required="required"#}
+                        {#                                            rows="3"></textarea>#}
+                        {#                                </div>#}
+                        {#                            </div>#}
+                        {#                            <div class="modal-footer">#}
+                        {#                                <button type="button" class="btn btn-secondary m-progress" data-dismiss="modal">Close#}
+                        {#                                </button>#}
+                        {#                                <button type="submit" class="btn btn-primary">Save changes</button>#}
+                        {#                            </div>#}
+                        {#                        </form>#}
                     </div>
                 </div>
                 <div class="loading" v-if="loading===true">Loading&#8230;</div>
             </div>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Question</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-for="question in questions">
+                    <th scope="row">${question.id}</th>
+                    <td>${question.text}</td>
+                </tr>
+                </tbody>
+            </table>
         </div>
     </div>
     <div class="loading" v-if="loading===true">Loading&#8230;</div>
-      <line-chart :data="chartData"></line-chart>
+    <line-chart :data="chartData"></line-chart>
 
 </div>
 {#<div id="app">#}
@@ -113,7 +126,8 @@
             currentTag: {},
             message: null,
             newArticle: {'article_heading': null, 'article_body': null},
-            chartData: [["Jan", 4], ["Feb", 2], ["Mar", 10], ["Apr", 5], ["May", 3]],
+            chartData: [],
+            questions: [],
         },
         mounted: function () {
             this.getTags();
@@ -121,7 +135,7 @@
         methods: {
             getTags: function () {
                 this.loading = true;
-                this.$http.get('/api/tag/')
+                this.$http.get('/api/tags/')
                     .then((response) => {
                         this.tags = response.data;
                         this.loading = false;
@@ -133,7 +147,7 @@
             },
             getTag: function (id) {
                 this.loading = true;
-                this.$http.get(`/api/tag/${id}/`)
+                this.$http.get(`/api/tags/${id}/`)
                     .then((response) => {
                         this.currentArticle = response.data;
                         {#$("#editArticleModal").modal('show');#}
@@ -144,10 +158,19 @@
                         this.loading = false;
                         console.log(err);
                     })
+                this.$http.get(`/questions/${id}`)
+                    .then((response) => {
+                        this.questions = response.data;
+                        this.loading = false;
+                    })
+                    .catch((err) => {
+                        this.loading = false;
+                        console.log(err);
+                    })
             },
         }
 
-  });
+    });
 
 </script>
 </body>

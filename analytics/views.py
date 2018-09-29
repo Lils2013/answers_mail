@@ -5,8 +5,12 @@ from django.shortcuts import render
 from django.http import HttpResponse
 import datetime
 import requests
-import json
+from rest_framework import status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 # Create your views here.
+from analytics.api.serializers import QuestionSerializer
+from analytics.models import Question, Tag
 
 
 def import_data(request, page_from = -1, page_to = -1):
@@ -27,3 +31,19 @@ def import_data(request, page_from = -1, page_to = -1):
         # >> > r.json()
         # {u'private_gists': 419, u'total_private_repos': 77, ...}
     return HttpResponse(html)
+
+
+@api_view(['GET'])
+def tag_detail(request, pk):
+    """
+    Retrieve, update or delete a code snippet.
+    """
+    try:
+        question = Tag.objects.get(pk=pk).questions.all()
+    except Question.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = QuestionSerializer(question, many=True)
+        return Response(serializer.data)
+

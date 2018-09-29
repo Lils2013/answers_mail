@@ -15,6 +15,8 @@ Including another URLconf
 """
 from django.conf.urls import include, url
 from django.contrib import admin
+
+from analytics import views
 from .routers import router
 from django.views.generic import TemplateView
 from analytics.views import import_data
@@ -27,5 +29,5 @@ urlpatterns = [
     url(r'^import/$', import_data),
     url(r'^import/(?P<page_from>\d+)$', import_data),
     url(r'^import/(?P<page_from>\d+)-(?P<page_to>\d+)$', import_data),
-
+    url(r'^questions/(?P<pk>[0-9]+)$', views.tag_detail),
 ]
