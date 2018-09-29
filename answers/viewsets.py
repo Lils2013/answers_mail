@@ -3,6 +3,6 @@ from .models import Question
 from .serializers import QuestionSerializer
 
 
-class ArticleViewSet(viewsets.ModelViewSet):
+class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
