@@ -11,3 +11,6 @@ class Question(models.Model):
     pub_date = models.DateTimeField('date published')
     link = models.TextField()
 
+
+class Tag(models.Model):
+    text = models.TextField()
