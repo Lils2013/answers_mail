@@ -10,11 +10,11 @@ class Question(models.Model):
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __unicode__(self):
-        result = '{0} {1}'.format(
-            self.created_at.ctime(),
-            self.text[:30])
-        return result
+    # def __unicode__(self):
+    #     result = '{0} {1}'.format(
+    #         self.created_at.ctime(),
+    #         self.text[:30])
+    #     return result
 
     class Meta:
         ordering = ['created_at']
@@ -24,12 +24,12 @@ class Tag(models.Model):
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     questions = models.ManyToManyField(Question)
-
-    def __unicode__(self):
-        result = '{0} {1}'.format(
-            self.created_at.ctime(),
-            self.text[:30])
-        return result
+    #
+    # def __unicode__(self):
+    #     result = '{0} {1}'.format(
+    #         self.created_at.ctime(),
+    #         self.text[:30])
+    #     return result
 
     class Meta:
         ordering = ['created_at']
