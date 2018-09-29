@@ -22,3 +22,8 @@ class QuestionSerializer(ModelSerializer):
         model = Question
         fields = '__all__'
         read_only_fields = ('id', 'text')
+
+
+class GraphSerializer(serializers.Serializer):
+    date = serializers.IntegerField(read_only=True)
+    count = serializers.IntegerField(read_only=True)

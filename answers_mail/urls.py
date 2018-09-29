@@ -30,4 +30,5 @@ urlpatterns = [
     url(r'^import/(?P<page_from>\d+)$', import_data),
     url(r'^import/(?P<page_from>\d+)-(?P<page_to>\d+)$', import_data),
     url(r'^questions/(?P<pk>[0-9]+)$', views.tag_detail),
+    url(r'^graph/(?P<pk>[0-9]+)$', views.graph),
 ]
