@@ -16,51 +16,40 @@ from analytics.models import Question, Tag
 import json
 
 
-
 def roundTime(dt=None, roundTo=60):
-   """Round a datetime object to any time lapse in seconds
+    """Round a datetime object to any time lapse in seconds
    dt : datetime.datetime object, default now.
    roundTo : Closest number of seconds to round to, default 1 minute.
    Author: Thierry Husson 2012 - Use it as you want but don't blame me.
    """
-   if dt == None : dt = datetime.datetime.now()
-   seconds = (dt.replace(tzinfo=None) - dt.min).seconds
-   rounding = (seconds+roundTo/2) // roundTo * roundTo
-   return dt + datetime.timedelta(0,rounding-seconds,-dt.microsecond)
-
-
+    if dt == None: dt = datetime.datetime.now()
+    seconds = (dt.replace(tzinfo=None) - dt.min).seconds
+    rounding = (seconds + roundTo / 2) // roundTo * roundTo
+    return dt + datetime.timedelta(0, rounding - seconds, -dt.microsecond)
 
 
 def import_one(page_from):
     now = datetime.datetime.now()
     r = requests.get('https://otvet.mail.ru/api/v2/question?qid={}'.format(page_from))
-    if (r.status_code == 200):
+    html = '{}'
+    print('importing from {}'.format(page_from))
+    if r.status_code == 200:
         data = r.json()
+        question_text = data['qtext'] + ' ' + data['qcomment']
 
-        # question_text = data['description'] + ' ' + data['qtext']
-        question_text = data['qtext']
         bad_date = int(data['added'])
         ok_date = roundTime(datetime.datetime.fromtimestamp(time.mktime(now.timetuple()) - bad_date), 60 * 60 * 24)
-        print('importing from {}'.format(page_from))
-        # ok_date = datetime.datetime.fromtimestamp(ok_date)
-
-        # tag_list = [s for s in data['category']['name'].split(',')]
         tag_list = data['category']['name']
-        html = "<html><body> question:\t{}<br/>tags:\t{}<br/>seconds:{}\t</body></html>".format(question_text, tag_list,
-                                                                                                ok_date)
-        # html = "<html><body> {} ---- {} </body></html>".format(time.mktime(now.timetuple()), bad_date)
 
         try:
             go = Question.objects.get(text=question_text)
-            go.delete()
-            html = "<html><body> {} </body></html>".format('question already exists, deleting, retry')
+            # go.delete()
+            html = html.format('&emsp;{} - [FAILED] - Already exists<br/>'.format(page_from) + '{}')
+            print('\t[FAILED] - Already exists\n')
+            return html
         except Question.DoesNotExist:
-            go = None
-            # html = "<html><body> {} </body></html>".format('not exist')
-
-            question = Question(text=question_text, created_at=ok_date.date())
+            question = Question(text=question_text, created_at=ok_date, id=long(page_from))
             question.save()
-
             # for s_tag in tag_list:
             s_tag = tag_list  # ETO VREMENNO
             if Tag.objects.filter(text__exact=s_tag).count() == 0:
@@ -68,25 +57,34 @@ def import_one(page_from):
                 tag.save()
                 tag.questions.add(Question.objects.get(id=question.id))
                 tag.save()
+            else:
+                tag = Tag.objects.get(text__exact=s_tag)
+                tag.questions.add(Question.objects.get(id=question.id))
+                tag.save()
+
+                html = html.format('&emsp;{} - [OK]<br/>'.format(page_from) + '{}')
+            print('\t[OK] - {} : <{}>\n'.format(ok_date, tag_list))
 
     else:
-        html = "<html><body>FUCKED UP with connection to otveti</body></html>"
+        print('\t[FAILED] - received code {}\n'.format(r.status_code))
+        html = html.format('&emsp;{} - [FAILED] - received code {}<br/>'.format(page_from, r.status_code) + '{}')
     return html
 
 
-def import_data(request, page_from = -1, page_to = -1):
-    html = "<html><body>Importing:<br/>\tfrom: {} <br/> to: {} <br/> errors {}</body></html>".format(int(page_from), int(page_to), '{}')
-    if (page_to == -1):
+def import_data(request, page_from=-1, page_to=-1):
+    html = "<html><body><h4>Importing:</h4><br/>&emsp;from: {} <br/>&emsp;to: {} <br/> <h4>Results</h4> {}</body></html>".format(
+        int(page_from), int(page_to), '{}')
+    if page_to == -1:
         HttpResponse(import_one(page_from))
     elif page_from != -1 and page_to != -1:
         for i in range(int(page_from), int(page_to)):
             try:
-                import_one(i)
+                html = html.format(import_one(i))
             except Exception as e:
-                html.format('failed importing page {}'. format(str(i) + '{}'))
-                print('failed importing page {}'. format(i))
-                pass
+                html = html.format('&emsp;{} - [FAILED] - exception: {}<br/>'.format(i, e.message) + '{}')
+                print('\t[FAILED] - exception: {}\n'.format(e.message))
     return HttpResponse(html)
+
 
 @api_view(['GET'])
 def tag_detail(request, pk):
@@ -105,7 +103,6 @@ def tag_detail(request, pk):
 
 @api_view(['GET'])
 def graph(request, pk):
-
     try:
         questions = Tag.objects.get(pk=pk).questions.all().order_by('-created_at')
     except Tag.DoesNotExist:
@@ -121,4 +118,3 @@ def graph(request, pk):
 
         print(data)
         return Response(data)
-
