@@ -13,7 +13,7 @@ from rest_framework.response import Response
 # Create your views here.
 from analytics.api.serializers import QuestionSerializer
 from analytics.models import Question, Tag
-import json
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 
 
 def roundTime(dt=None, roundTo=60):
@@ -74,20 +74,26 @@ def import_one(page_from):
 def import_data(request, page_from=-1, page_to=-1):
     html = "<html><body><h4>Importing:</h4><br/>&emsp;from: {} <br/>&emsp;to: {} <br/> <h4>Results</h4> {}</body></html>".format(
         int(page_from), int(page_to), '{}')
-    if page_to == -1:
+    if page_from != -1 and page_to == -1:
         HttpResponse(import_one(page_from))
     elif page_from != -1 and page_to != -1:
+        if page_to < page_from:
+            tmp = page_to
+            page_to = page_from
+            page_from = tmp
         for i in range(int(page_from), int(page_to)):
             try:
                 html = html.format(import_one(i))
             except Exception as e:
                 html = html.format('&emsp;{} - [FAILED] - exception: {}<br/>'.format(i, e.message) + '{}')
                 print('\t[FAILED] - exception: {}\n'.format(e.message))
+    else:
+        html = "<html><body><h4>Не указан диапазон id, которые нужно скачать. Пример:</h4><br/> {}210700000-210701000</body></html>".format(request.get_raw_uri())
     return HttpResponse(html)
 
 
 @api_view(['GET'])
-def tag_detail(request, pk):
+def tag_detail(request, pk, page=1, page_size=10):
     """
     Retrieve, update or delete a code snippet.
     """
@@ -97,7 +103,8 @@ def tag_detail(request, pk):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        serializer = QuestionSerializer(questions, many=True)
+        paginator = Paginator(questions, page_size)
+        serializer = QuestionSerializer(paginator.page(page), many=True)
         return Response(serializer.data)
 
 
