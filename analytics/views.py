@@ -125,3 +125,19 @@ def graph(request, pk):
 
         print(data)
         return Response(data)
+
+
+@api_view(['GET'])
+def tags(request, page=1, page_size=10):
+    """
+    Retrieve, update or delete a code snippet.
+    """
+    try:
+        tags = sorted(Tag.objects.all(), key=lambda i: i.questions.count(), reverse=True)
+    except Tag.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        paginator = Paginator(tags, page_size)
+        serializer = QuestionSerializer(paginator.page(page), many=True)
+        return Response(serializer.data)
