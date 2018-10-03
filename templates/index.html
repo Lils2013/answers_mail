@@ -56,7 +56,9 @@
                                 </thead>
                                 <tbody>
                                 <tr v-for="question in questions">
-                                    <th scope="row">${question.id}</th>
+                                    <th scope="row">
+                                        <div style="cursor: pointer; color:blue; text-decoration:underline;" v-on:click="toQuestion(question.id)">${question.id}</div>
+                                    </th>
                                     <td>${question.text}</td>
                                 </tr>
                                 </tbody>
@@ -193,6 +195,9 @@
                         this.loading = false;
                         console.log(err);
                     })
+            },
+            toQuestion: function (id) {
+                window.location.href = "https://otvet.mail.ru/question/" + id;
             },
         }
 
