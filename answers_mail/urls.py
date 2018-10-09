@@ -19,14 +19,14 @@ from django.contrib import admin
 from analytics import views
 from .routers import router
 from django.views.generic import TemplateView
-from analytics.views import import_data
-
+from analytics.views import import_data, import_from_dump
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^api/', include(router.urls)),
     url(r'^answers/', TemplateView.as_view(template_name='index.html')),
     url(r'^import/$', import_data),
+    url(r'^import_from_dump/$', import_from_dump),
     url(r'^import/(?P<page_from>\d+)$', import_data),
     url(r'^import/(?P<page_from>\d+)-(?P<page_to>\d+)$', import_data),
     url(r'^questions/(?P<pk>[0-9]+)$', views.tag_detail),

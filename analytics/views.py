@@ -13,6 +13,8 @@ from rest_framework.response import Response
 from analytics.api.serializers import QuestionSerializer
 from analytics.models import Question, Tag
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+import csv
+import re
 
 
 def import_one(page_from):
@@ -72,7 +74,8 @@ def import_data(request, page_from=-1, page_to=-1):
             if i % (int(page_to) - int(page_from)) == 0:
                 print("progress: {}%".format(i))
     else:
-        html = "<html><body><h4>Не указан диапазон id, которые нужно скачать. Пример:</h4><br/> {}210700000-210701000</body></html>".format(request.get_raw_uri())
+        html = "<html><body><h4>Не указан диапазон id, которые нужно скачать. Пример:</h4><br/> {}210700000-210701000</body></html>".format(
+            request.get_raw_uri())
     return HttpResponse(html)
 
 
@@ -125,3 +128,44 @@ def tags(request, page=1, page_size=10):
         paginator = Paginator(tags, page_size)
         serializer = QuestionSerializer(paginator.page(page), many=True)
         return Response(serializer.data)
+
+
+def import_from_dump(request):
+    with open("otvet-queastions-2018-2.txt") as tsvfile:
+        for line in tsvfile:
+            # print(line)
+            line_data = re.split('\t', line)
+            question_text = line_data[9].rstrip().lstrip()
+            if (len(line_data) == 11):
+                question_text += line_data[10].rstrip().lstrip()
+            created_at = datetime.strptime(line_data[1].split(" ")[0], "%Y-%m-%d")
+            question = Question(text=question_text, created_at=created_at, id=int(line_data[0]))
+            # print(question.text)
+            question.save()
+            try:
+                tag = Tag.objects.get(id=int(line_data[5]))
+                tag.questions.add(Question.objects.get(id=question.id))
+                tag.save()
+            except Tag.DoesNotExist:
+                tag = Tag(id=int(line_data[5]), text=line_data[6])
+                tag.save()
+                tag.questions.add(Question.objects.get(id=question.id))
+                tag.save()
+
+            # print '-----'
+            # print line
+            # print line_data
+            # print line_data[0]
+            # print line_data[1]
+            # print line_data[2]
+            # print line_data[3]
+            # print line_data[4]
+            # print line_data[5]
+            # print line_data[6]
+            # print line_data[7]
+            # print line_data[8]
+            # print line_data[9]
+            # if (len(line_data) == 11):
+            #      print line_data[10]
+
+    return HttpResponse("<html><body><h4>Lol</h4></body></html>")
