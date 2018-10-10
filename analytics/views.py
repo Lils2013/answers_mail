@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from django.shortcuts import render
 from django.http import HttpResponse
-from datetime import datetime
+from datetime import datetime, timedelta
 import requests
 from analytics.models import Question, Tag, Category
 from rest_framework import status
@@ -96,19 +96,53 @@ def tag_detail(request, pk, page=1, page_size=10):
 
 
 @api_view(['GET'])
-def graph(request, pk):
-    try:
-        questions = Tag.objects.get(pk=pk).questions.all().order_by('-created_at')
-    except Tag.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
+def graph(request, pk, time_interval):
     if request.method == 'GET':
+        try:
+            questions = Tag.objects.get(pk=pk).questions.all().order_by('-created_at')
+        except Tag.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
         data = {}
-        for question in questions:
-            if not data.has_key(question.created_at.date().isoformat()):
-                data[question.created_at.date().isoformat()] = 1
-            else:
-                data[question.created_at.date().isoformat()] = data[question.created_at.date().isoformat()] + 1
+        print(time_interval)
+        if time_interval == '7-d':
+            # end_date = datetime.today()
+            end_date = datetime.strptime('2018-02-02', "%Y-%m-%d")
+            start_date = end_date - timedelta(days=7)
+            questions = questions.filter(created_at__range=(start_date,end_date))
+            for question in questions:
+                datetime_hour = (question.created_at.replace(minute=0, second=0) + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
+                if not data.has_key(datetime_hour):
+                    data[datetime_hour] = 1
+                else:
+                    data[datetime_hour] = data[datetime_hour] + 1
+        elif time_interval == '1-m':
+            # end_date = datetime.today()
+            end_date = datetime.strptime('2018-02-02', "%Y-%m-%d")
+            start_date = end_date - timedelta(days=30)
+            questions = questions.filter(created_at__range=(start_date,end_date))
+            for question in questions:
+                if not data.has_key(question.created_at.date().isoformat()):
+                    data[question.created_at.date().isoformat()] = 1
+                else:
+                    data[question.created_at.date().isoformat()] = data[question.created_at.date().isoformat()] + 1
+        elif time_interval == '1-d':
+            # end_date = datetime.today()
+            end_date = datetime.strptime('2018-02-02', "%Y-%m-%d")
+            start_date = end_date - timedelta(days=1)
+            questions = questions.filter(created_at__range=(start_date,end_date))
+            for question in questions:
+                datetime_hour = (question.created_at.replace(minute=0, second=0) + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
+                if not data.has_key(datetime_hour):
+                    data[datetime_hour] = 1
+                else:
+                    data[datetime_hour] = data[datetime_hour] + 1
+        else:
+            for question in questions:
+                if not data.has_key(question.created_at.date().isoformat()):
+                    data[question.created_at.date().isoformat()] = 1
+                else:
+                    data[question.created_at.date().isoformat()] = data[question.created_at.date().isoformat()] + 1
+
 
         print(data)
         return Response(data)
@@ -137,7 +171,7 @@ def import_from_dump(request):
             line_data = re.split('\t', line)
             question_text = line_data[9].rstrip().lstrip()
             if (len(line_data) == 11):
-                question_text += line_data[10].rstrip().lstrip()
+                question_text += ' ' + line_data[10].rstrip().lstrip()
             created_at = datetime.strptime(line_data[1], "%Y-%m-%d %H:%M:%S")
             question = Question(text=question_text, rating=int(line_data[2]), created_at=created_at, id=int(line_data[0]))
             # print(question.text)
@@ -159,6 +193,15 @@ def import_from_dump(request):
                 category = Category(id=int(line_data[5]), name=line_data[6])
                 category.save()
                 category.questions.add(Question.objects.get(id=question.id))
+                category.save()
+            try:
+                category = Category.objects.get(id=int(line_data[7]))
+                category.questions_parent.add(Question.objects.get(id=question.id))
+                category.save()
+            except Category.DoesNotExist:
+                category = Category(id=int(line_data[7]), name=line_data[8])
+                category.save()
+                category.questions_parent.add(Question.objects.get(id=question.id))
                 category.save()
 
     return HttpResponse("<html><body><h4>Lol</h4></body></html>")
