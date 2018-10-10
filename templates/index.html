@@ -35,7 +35,7 @@
             </table>
             <div class="modal fade" id="editArticleModal" tabindex="-1" role="dialog"
                  aria-labelledby="exampleModalLongTitle" aria-hidden="true">
-                <div class="modal-dialog" role="document">
+                <div class="modal-dialog modal-lg" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title" id="exampleModalLongTitle">Tag Details</h5>
@@ -46,6 +46,10 @@
                         <div class="modal-body">
                             <h2>Time Trend</h2>
                             <line-chart :data="chartData"></line-chart>
+                            <button class="btn btn-info" v-on:click="getDay()">Day</button>
+                            <button class="btn btn-info" v-on:click="getWeek()">Week</button>
+                            <button class="btn btn-info" v-on:click="getMonth()">Month</button>
+                            <button class="btn btn-info" v-on:click="getAllTime()">All Time</button>
                             <h2>Questions:</h2>
                             <table class="table">
                                 <thead>
@@ -57,7 +61,9 @@
                                 <tbody>
                                 <tr v-for="question in questions">
                                     <th scope="row">
-                                        <div style="cursor: pointer; color:blue; text-decoration:underline;" v-on:click="toQuestion(question.id)">${question.id}</div>
+                                        <div style="cursor: pointer; color:blue; text-decoration:underline;"
+                                             v-on:click="toQuestion(question.id)">${question.id}
+                                        </div>
                                     </th>
                                     <td>${question.text}</td>
                                 </tr>
@@ -186,7 +192,52 @@
                         this.loading = false;
                         console.log(err);
                     });
-                this.$http.get(`/graph/${id}`)
+                this.$http.get(`/graph/${id}/1-d`)
+                    .then((response) => {
+                        this.chartData = response.data;
+                        this.loading = false;
+                        this.currentTag = id
+                    })
+                    .catch((err) => {
+                        this.loading = false;
+                        console.log(err);
+                    })
+            },
+            getDay: function () {
+                this.$http.get(`/graph/${this.currentTag}/1-d`)
+                    .then((response) => {
+                        this.chartData = response.data;
+                        this.loading = false;
+                    })
+                    .catch((err) => {
+                        this.loading = false;
+                        console.log(err);
+                    })
+            },
+            getWeek: function () {
+                this.$http.get(`/graph/${this.currentTag}/7-d`)
+                    .then((response) => {
+                        this.chartData = response.data;
+                        this.loading = false;
+                    })
+                    .catch((err) => {
+                        this.loading = false;
+                        console.log(err);
+                    })
+            },
+            getMonth: function () {
+                this.$http.get(`/graph/${this.currentTag}/1-m`)
+                    .then((response) => {
+                        this.chartData = response.data;
+                        this.loading = false;
+                    })
+                    .catch((err) => {
+                        this.loading = false;
+                        console.log(err);
+                    })
+            },
+            getAllTime: function () {
+                this.$http.get(`/graph/${this.currentTag}/a`)
                     .then((response) => {
                         this.chartData = response.data;
                         this.loading = false;
