@@ -15,67 +15,121 @@ from analytics.models import Question, Tag
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 import csv
 import re
+import json
 
 
-def import_one(page_from):
-    r = requests.get('https://otvet.mail.ru/api/v3/question/{}'.format(page_from), timeout=0.3)
-    html = '{}'
-    print('importing from {}'.format(page_from))
+def get_api_page(page_from, page_size):
+    url = 'https://otvet.mail.ru/api/v3/questions?limit={}&start_id={}'.format(page_size, page_from)
+    r = requests.get(url)
     if r.status_code == 200:
-        data = r.json()
-        question_text = data['text'] + ' ' + data['description']
-        date_floor = datetime.strptime(data["created_at"].split("T")[0], "%Y-%m-%d")
-        tag_title = data['category']['title']
-        tag_id = int(data['category']['id'])
-
-        try:
-            go = Question.objects.get(id=page_from)
-            html = html.format('&emsp;{} - [FAILED] - Already exists<br/>'.format(page_from) + '{}')
-            print('\t[FAILED] - Already exists\n')
-            return html
-        except Question.DoesNotExist:
-            question = Question(text=question_text, created_at=date_floor, id=long(page_from))
-            question.save()
-            try:
-                tag = Tag.objects.get(id=tag_id)
-                tag.questions.add(Question.objects.get(id=question.id))
-                tag.save()
-            except Tag.DoesNotExist:
-                tag = Tag(id=tag_id, text=tag_title)
-                tag.save()
-                tag.questions.add(Question.objects.get(id=question.id))
-                tag.save()
-
-                # html = html.format('&emsp;{} - [OK]<br/>'.format(page_from) + '{}')
-            print('\t[OK] - {} : <{}>\n'.format(date_floor, tag_title))
-
+        # print(r.text)
+        return r.json()
     else:
-        print('\t[FAILED] - received code {}\n'.format(r.status_code))
-        html = html.format('&emsp;{} - [FAILED] - received code {}<br/>'.format(page_from, r.status_code) + '{}')
+        raise Exception("server response code {} \n from url: {}".format(r.status_code, url))
+
+
+def parse_and_save_question(data):
+    question_text = data['text'] + ' ' + data['description']
+    # date_floor = datetime.strptime(data["created_at"].split("T")[0], "%Y-%m-%d")
+    date_floor = datetime.strptime(data["created_at"].split('+')[0], "%Y-%m-%dT%H:%M:%S")
+    tag_title = data['category']['title']
+    tag_id = int(data['category']['id'])
+    qid = int(data['id'])
+
+    try:
+        check_if_exists = Question.objects.get(id=qid)
+        return 'already exists'
+    except Question.DoesNotExist:
+        question = Question(text=question_text, created_at=date_floor, id=qid)
+        question.save()
+        try:
+            tag = Tag.objects.get(id=tag_id)
+            tag.questions.add(Question.objects.get(id=question.id))
+            tag.save()
+        except Tag.DoesNotExist:
+            tag = Tag(id=tag_id, text=tag_title)
+            tag.save()
+            tag.questions.add(Question.objects.get(id=question.id))
+            tag.save()
+        return tag_title
+
+
+def update_and_show_status(report, current_status):
+    for k, v in current_status.iteritems():
+        if report.get(k) is None:
+            report[k] = v
+        else:
+            report[k] = report[k] + v
+    sorted_by_value = sorted(current_status.items(), key=lambda kv: kv[1],  reverse=True)
+    length = min(10, len(sorted_by_value))
+    for i in range(length):
+        print("{}: {}".format(sorted_by_value[i][1], sorted_by_value[i][0]))
+    return report
+
+
+def import_from_api(page_from, amount):
+    page_size = 1000
+    pages = int(amount / page_size)
+    last_page_size = amount % page_size
+    html = '{}'
+    report = {}
+    try:
+        if pages != 0:
+            for i in range(pages+1):
+                current_status = {}
+                if i == pages:
+                    page_size = last_page_size
+                try:
+                    data = get_api_page(page_from, page_size)
+                except Exception as e:
+                    print("***** PROGRESS *****")
+                    print("page: {}/{}".format(i+1, pages+1))
+                    print("Error: {}".format(e.message))
+                    page_from += page_size
+                    continue
+                if len(data) == 0:
+                    print("Вопросы-то кончились!")
+                    break
+                for q in data:
+                    result = parse_and_save_question(q)
+                    if current_status.get(result) is None:
+                        current_status[result] = 1
+                    else:
+                        current_status[result] += 1
+                    page_from = int(q['id'])
+
+                print("***** PROGRESS *****")
+                print("page: {}/{}".format(i+1, pages+1))
+                report = update_and_show_status(report, current_status)
+                print("\n")
+    finally:
+        sorted_by_value = sorted(report.items(), key=lambda kv: kv[1], reverse=True)
+        for (k, v) in sorted_by_value:
+            html = html.format('{}  -  [{}] <br/> {}'.format(v, k, "{}"))
     return html
 
+# 210800000-88111
 
-def import_data(request, page_from=-1, page_to=-1):
-    html = "<html><body><h4>Importing:</h4><br/>&emsp;from: {} <br/>&emsp;to: {} <br/> <h4>Results</h4> {}</body></html>".format(
-        int(page_from), int(page_to), '{}')
-    if page_from != -1 and page_to == -1:
-        HttpResponse(import_one(page_from))
-    elif page_from != -1 and page_to != -1:
-        if page_to < page_from:
-            tmp = page_to
-            page_to = page_from
-            page_from = tmp
-        for i in range(int(page_from), int(page_to)):
-            try:
-                html = html.format(import_one(i))
-            except Exception as e:
-                html = html.format('&emsp;{} - [FAILED] - exception: {}<br/>'.format(i, e.message) + '{}')
-                print('{}\t[FAILED] - exception: {}\n'.format(i, e.message))
-            if i % (int(page_to) - int(page_from)) == 0:
-                print("progress: {}%".format(i))
+
+def import_from_api_view(request, page_from=-1, page_to=-1, amount=-1):
+    html = "<html><body><h4>Importing:</h4>" \
+           "<br/>&emsp;from: {} " \
+           "<br/>&emsp;amount: {} " \
+           "<br/> <h4>Results</h4> time: {} " \
+           "<br/>{}</body></html>"
+    page_from = int(page_from)
+    page_to = int(page_to)
+    amount = int(amount)
+    start_time = datetime.now()
+
+    if page_from != -1 and page_to == -1 and amount != -1:
+        info = import_from_api(page_from, amount)
+        work_time = datetime.now() - start_time
+        html = html.format(page_from, amount, str(work_time).split('.')[0] ,info)
     else:
-        html = "<html><body><h4>Не указан диапазон id, которые нужно скачать. Пример:</h4><br/> {}210700000-210701000</body></html>".format(
-            request.get_raw_uri())
+        html = "<html><body><h4>Не указан диапазон id, которые нужно скачать. Пример:</h4>" \
+               "<br/>page_from-amount:  {}210700000-1000</body></html>".format(
+            request.get_raw_uri(), request.get_raw_uri())
     return HttpResponse(html)
 
 
