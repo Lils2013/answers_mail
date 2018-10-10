@@ -103,7 +103,6 @@ def graph(request, pk, time_interval):
         except Tag.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
         data = {}
-        print(time_interval)
         if time_interval == '1-d':
             # end_date = datetime.today()
             end_date = datetime.strptime('2018-02-02', "%Y-%m-%d")
@@ -172,7 +171,7 @@ def import_from_dump(request):
             line_data = re.split('\t', line)
             question_text = line_data[9].rstrip().lstrip()
             if (len(line_data) == 11):
-                question_text += ' ' + line_data[10].rstrip().lstrip()
+                question_text += ' '.encode('utf-8') + line_data[10].rstrip().lstrip()
             created_at = datetime.strptime(line_data[1], "%Y-%m-%d %H:%M:%S")
             question = Question(text=question_text, rating=int(line_data[2]), created_at=created_at, id=int(line_data[0]))
             # print(question.text)
@@ -183,6 +182,15 @@ def import_from_dump(request):
                 tag.save()
             except Tag.DoesNotExist:
                 tag = Tag(id=int(line_data[5]), text=line_data[6])
+                tag.save()
+                tag.questions.add(Question.objects.get(id=question.id))
+                tag.save()
+            try:
+                tag = Tag.objects.get(id=int(line_data[7]))
+                tag.questions.add(Question.objects.get(id=question.id))
+                tag.save()
+            except Tag.DoesNotExist:
+                tag = Tag(id=int(line_data[7]), text=line_data[8])
                 tag.save()
                 tag.questions.add(Question.objects.get(id=question.id))
                 tag.save()
