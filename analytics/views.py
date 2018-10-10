@@ -5,7 +5,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from datetime import datetime
 import requests
-from analytics.models import Question, Tag
+from analytics.models import Question, Tag, Category
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -138,8 +138,8 @@ def import_from_dump(request):
             question_text = line_data[9].rstrip().lstrip()
             if (len(line_data) == 11):
                 question_text += line_data[10].rstrip().lstrip()
-            created_at = datetime.strptime(line_data[1].split(" ")[0], "%Y-%m-%d")
-            question = Question(text=question_text, created_at=created_at, id=int(line_data[0]))
+            created_at = datetime.strptime(line_data[1], "%Y-%m-%d %H:%M:%S")
+            question = Question(text=question_text, rating=int(line_data[2]), created_at=created_at, id=int(line_data[0]))
             # print(question.text)
             question.save()
             try:
@@ -151,21 +151,14 @@ def import_from_dump(request):
                 tag.save()
                 tag.questions.add(Question.objects.get(id=question.id))
                 tag.save()
-
-            # print '-----'
-            # print line
-            # print line_data
-            # print line_data[0]
-            # print line_data[1]
-            # print line_data[2]
-            # print line_data[3]
-            # print line_data[4]
-            # print line_data[5]
-            # print line_data[6]
-            # print line_data[7]
-            # print line_data[8]
-            # print line_data[9]
-            # if (len(line_data) == 11):
-            #      print line_data[10]
+            try:
+                category = Category.objects.get(id=int(line_data[5]))
+                category.questions.add(Question.objects.get(id=question.id))
+                category.save()
+            except Category.DoesNotExist:
+                category = Category(id=int(line_data[5]), name=line_data[6])
+                category.save()
+                category.questions.add(Question.objects.get(id=question.id))
+                category.save()
 
     return HttpResponse("<html><body><h4>Lol</h4></body></html>")
