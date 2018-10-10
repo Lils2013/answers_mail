@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.shortcuts import render
-from django.http import HttpResponse
+import re
 from datetime import datetime, timedelta
+
 import requests
-from analytics.models import Question, Tag, Category
+from django.core.paginator import Paginator
+from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+
 # Create your views here.
 from analytics.api.serializers import QuestionSerializer
+from analytics.models import Category
 from analytics.models import Question, Tag
-from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
-import csv
-import re
 
 
 def import_one(page_from):
@@ -104,7 +104,19 @@ def graph(request, pk, time_interval):
             return Response(status=status.HTTP_404_NOT_FOUND)
         data = {}
         print(time_interval)
-        if time_interval == '7-d':
+        if time_interval == '1-d':
+            # end_date = datetime.today()
+            end_date = datetime.strptime('2018-02-02', "%Y-%m-%d")
+            start_date = end_date - timedelta(days=1)
+            questions = questions.filter(created_at__range=(start_date, end_date))
+            for question in questions:
+                datetime_hour = (question.created_at.replace(minute=0, second=0) + timedelta(hours=1)).strftime(
+                    "%Y-%m-%d %H:%M:%S")
+                if not data.has_key(datetime_hour):
+                    data[datetime_hour] = 1
+                else:
+                    data[datetime_hour] = data[datetime_hour] + 1
+        elif time_interval == '7-d':
             # end_date = datetime.today()
             end_date = datetime.strptime('2018-02-02', "%Y-%m-%d")
             start_date = end_date - timedelta(days=7)
@@ -125,17 +137,6 @@ def graph(request, pk, time_interval):
                     data[question.created_at.date().isoformat()] = 1
                 else:
                     data[question.created_at.date().isoformat()] = data[question.created_at.date().isoformat()] + 1
-        elif time_interval == '1-d':
-            # end_date = datetime.today()
-            end_date = datetime.strptime('2018-02-02', "%Y-%m-%d")
-            start_date = end_date - timedelta(days=1)
-            questions = questions.filter(created_at__range=(start_date,end_date))
-            for question in questions:
-                datetime_hour = (question.created_at.replace(minute=0, second=0) + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
-                if not data.has_key(datetime_hour):
-                    data[datetime_hour] = 1
-                else:
-                    data[datetime_hour] = data[datetime_hour] + 1
         else:
             for question in questions:
                 if not data.has_key(question.created_at.date().isoformat()):
