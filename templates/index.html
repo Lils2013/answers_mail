@@ -172,20 +172,10 @@
             },
             getTag: function (id) {
                 this.loading = true;
-                this.$http.get(`/api/tags/${id}/`)
-                    .then((response) => {
-                        this.currentArticle = response.data;
-                        $("#editArticleModal").modal('show');
-                        {#this.chartData = [["AAA", 4], ["A", 2], ["Mar", 10], ["Apr", 5], ["May", 3]],#}
-                        this.loading = false;
-                    })
-                    .catch((err) => {
-                        this.loading = false;
-                        console.log(err);
-                    });
                 this.$http.get(`/questions/${id}`)
                     .then((response) => {
                         this.questions = response.data;
+                        $("#editArticleModal").modal('show');
                         this.loading = false;
                     })
                     .catch((err) => {

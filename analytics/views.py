@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import re
 from datetime import datetime, timedelta
 
+import pytz
 import requests
 from django.core.paginator import Paginator
 from django.http import HttpResponse
@@ -80,7 +81,7 @@ def import_data(request, page_from=-1, page_to=-1):
 
 
 @api_view(['GET'])
-def tag_detail(request, pk, page=1, page_size=10):
+def tag_detail(request, pk, page=1, page_size=50):
     """
     Retrieve, update or delete a code snippet.
     """
@@ -104,52 +105,60 @@ def graph(request, pk, time_interval):
             return Response(status=status.HTTP_404_NOT_FOUND)
         data = {}
         if time_interval == '1-d':
-            # end_date = datetime.today()
-            end_date = datetime.strptime('2018-02-02', "%Y-%m-%d")
+            end_date = datetime.strptime('2018-02-02T00:00:00', "%Y-%m-%dT%H:%M:%S")
+            timezone = pytz.timezone("Europe/Moscow")
+            end_date = timezone.localize(end_date)
             start_date = end_date - timedelta(days=1)
             questions = questions.filter(created_at__range=(start_date, end_date))
+            for i in range(24 * 1):
+                data[(start_date.replace(minute=0, second=0) + timedelta(hours=i + 1)).isoformat()] = 0
             for question in questions:
-                datetime_hour = (question.created_at.replace(minute=0, second=0) + timedelta(hours=1)).strftime(
-                    "%Y-%m-%d %H:%M:%S")
+                datetime_hour = (question.created_at.astimezone(timezone).replace(minute=0, second=0) + timedelta(
+                    hours=1)).isoformat()
                 if not data.has_key(datetime_hour):
                     data[datetime_hour] = 1
                 else:
                     data[datetime_hour] = data[datetime_hour] + 1
         elif time_interval == '7-d':
-            # end_date = datetime.today()
-            end_date = datetime.strptime('2018-02-02', "%Y-%m-%d")
+            end_date = datetime.strptime('2018-02-02T00:00:00', "%Y-%m-%dT%H:%M:%S")
+            timezone = pytz.timezone("Europe/Moscow")
+            end_date = timezone.localize(end_date)
             start_date = end_date - timedelta(days=7)
-            questions = questions.filter(created_at__range=(start_date,end_date))
+            questions = questions.filter(created_at__range=(start_date, end_date))
+            for i in range(6 * 7):
+                data[(start_date.replace(minute=0, second=0) + timedelta(hours=i * 4 + 4)).isoformat()] = 0
             for question in questions:
-                datetime_hour = (question.created_at.replace(minute=0, second=0) + timedelta(hours=1)).strftime("%Y-%m-%d %H:%M:%S")
+                datetime_hour = (question.created_at.astimezone(timezone).replace(minute=0, second=0) + timedelta(
+                    hours=4)).isoformat()
                 if not data.has_key(datetime_hour):
                     data[datetime_hour] = 1
                 else:
                     data[datetime_hour] = data[datetime_hour] + 1
         elif time_interval == '1-m':
-            # end_date = datetime.today()
             end_date = datetime.strptime('2018-02-02', "%Y-%m-%d")
+            timezone = pytz.timezone("Europe/Moscow")
+            end_date = timezone.localize(end_date)
             start_date = end_date - timedelta(days=30)
-            questions = questions.filter(created_at__range=(start_date,end_date))
+            questions = questions.filter(created_at__range=(start_date, end_date))
             for question in questions:
-                if not data.has_key(question.created_at.date().isoformat()):
-                    data[question.created_at.date().isoformat()] = 1
+                date_with_tz = question.created_at.astimezone(timezone).date().isoformat()
+                if not data.has_key(date_with_tz):
+                    data[date_with_tz] = 1
                 else:
-                    data[question.created_at.date().isoformat()] = data[question.created_at.date().isoformat()] + 1
+                    data[date_with_tz] = data[date_with_tz] + 1
         else:
+            timezone = pytz.timezone("Europe/Moscow")
             for question in questions:
-                if not data.has_key(question.created_at.date().isoformat()):
-                    data[question.created_at.date().isoformat()] = 1
+                date_with_tz = question.created_at.astimezone(timezone).date().isoformat()
+                if not data.has_key(date_with_tz):
+                    data[date_with_tz] = 1
                 else:
-                    data[question.created_at.date().isoformat()] = data[question.created_at.date().isoformat()] + 1
-
-
-        print(data)
+                    data[date_with_tz] = data[date_with_tz] + 1
         return Response(data)
 
 
 @api_view(['GET'])
-def tags(request, page=1, page_size=10):
+def tags(request, page=1, page_size=50):
     """
     Retrieve, update or delete a code snippet.
     """
@@ -173,7 +182,11 @@ def import_from_dump(request):
             if (len(line_data) == 11):
                 question_text += ' '.encode('utf-8') + line_data[10].rstrip().lstrip()
             created_at = datetime.strptime(line_data[1], "%Y-%m-%d %H:%M:%S")
-            question = Question(text=question_text, rating=int(line_data[2]), created_at=created_at, id=int(line_data[0]))
+            timezone = pytz.timezone("Europe/Moscow")
+            created_at = timezone.localize(created_at)
+            # print(created_at.isoformat())
+            question = Question(text=question_text, rating=int(line_data[2]), created_at=created_at,
+                                id=int(line_data[0]))
             # print(question.text)
             question.save()
             try:
