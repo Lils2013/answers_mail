@@ -36,6 +36,9 @@ def parse_and_save_question(data):
     question_text = data['text'] + ' ' + data['description']
     # date_floor = datetime.strptime(data["created_at"].split("T")[0], "%Y-%m-%d")
     date_floor = datetime.strptime(data["created_at"].split('+')[0], "%Y-%m-%dT%H:%M:%S")
+    timezone = pytz.timezone("Europe/Moscow")
+    date_floor = timezone.localize(date_floor)
+    rating = int(data['mark_count'])
     tag_title = data['category']['title']
     tag_id = int(data['category']['id'])
     qid = int(data['id'])
@@ -44,7 +47,7 @@ def parse_and_save_question(data):
         check_if_exists = Question.objects.get(id=qid)
         return 'already exists'
     except Question.DoesNotExist:
-        question = Question(text=question_text, created_at=date_floor, id=qid)
+        question = Question(text=question_text, created_at=date_floor, id=qid, rating=rating)
         question.save()
         try:
             tag = Tag.objects.get(id=tag_id)
@@ -55,6 +58,15 @@ def parse_and_save_question(data):
             tag.save()
             tag.questions.add(Question.objects.get(id=question.id))
             tag.save()
+        try:
+            category = Category.objects.get(id=tag_id)
+            category.questions.add(Question.objects.get(id=question.id))
+            category.save()
+        except Category.DoesNotExist:
+            category = Category(id=tag_id, name=tag_title)
+            category.save()
+            category.questions.add(Question.objects.get(id=question.id))
+            category.save()
         return tag_title
 
 
@@ -162,11 +174,15 @@ def graph(request, pk, time_interval):
             return Response(status=status.HTTP_404_NOT_FOUND)
         data = {}
         if time_interval == '1-d':
-            end_date = datetime.strptime('2018-02-02T00:00:00', "%Y-%m-%dT%H:%M:%S")
+            end_date = datetime.strptime('2018-01-02T00:00:00', "%Y-%m-%dT%H:%M:%S")
             timezone = pytz.timezone("Europe/Moscow")
             end_date = timezone.localize(end_date)
             start_date = end_date - timedelta(days=1)
+            start_date = start_date.astimezone(pytz.timezone("UTC"))
+            end_date = end_date.astimezone(pytz.timezone("UTC"))
             questions = questions.filter(created_at__range=(start_date, end_date))
+            start_date = start_date.astimezone(pytz.timezone("Europe/Moscow"))
+            end_date = end_date.astimezone(pytz.timezone("Europe/Moscow"))
             for i in range(24 * 1):
                 data[(start_date.replace(minute=0, second=0) + timedelta(hours=i + 1)).isoformat()] = 0
             for question in questions:
@@ -177,26 +193,34 @@ def graph(request, pk, time_interval):
                 else:
                     data[datetime_hour] = data[datetime_hour] + 1
         elif time_interval == '7-d':
-            end_date = datetime.strptime('2018-02-02T00:00:00', "%Y-%m-%dT%H:%M:%S")
+            end_date = datetime.strptime('2018-01-08T00:00:00', "%Y-%m-%dT%H:%M:%S")
             timezone = pytz.timezone("Europe/Moscow")
             end_date = timezone.localize(end_date)
             start_date = end_date - timedelta(days=7)
+            start_date = start_date.astimezone(pytz.timezone("UTC"))
+            end_date = end_date.astimezone(pytz.timezone("UTC"))
             questions = questions.filter(created_at__range=(start_date, end_date))
-            for i in range(6 * 7):
-                data[(start_date.replace(minute=0, second=0) + timedelta(hours=i * 4 + 4)).isoformat()] = 0
+            start_date = start_date.astimezone(pytz.timezone("Europe/Moscow"))
+            end_date = end_date.astimezone(pytz.timezone("Europe/Moscow"))
+            for i in range(24 * 7):
+                data[(start_date.replace(minute=0, second=0) + timedelta(hours=i + 1)).isoformat()] = 0
             for question in questions:
                 datetime_hour = (question.created_at.astimezone(timezone).replace(minute=0, second=0) + timedelta(
-                    hours=4)).isoformat()
+                    hours=1)).isoformat()
                 if not data.has_key(datetime_hour):
                     data[datetime_hour] = 1
                 else:
                     data[datetime_hour] = data[datetime_hour] + 1
         elif time_interval == '1-m':
-            end_date = datetime.strptime('2018-02-02', "%Y-%m-%d")
+            end_date = datetime.strptime('2018-02-02T00:00:00', "%Y-%m-%dT%H:%M:%S")
             timezone = pytz.timezone("Europe/Moscow")
             end_date = timezone.localize(end_date)
             start_date = end_date - timedelta(days=30)
+            start_date = start_date.astimezone(pytz.timezone("UTC"))
+            end_date = end_date.astimezone(pytz.timezone("UTC"))
             questions = questions.filter(created_at__range=(start_date, end_date))
+            start_date = start_date.astimezone(pytz.timezone("Europe/Moscow"))
+            end_date = end_date.astimezone(pytz.timezone("Europe/Moscow"))
             for question in questions:
                 date_with_tz = question.created_at.astimezone(timezone).date().isoformat()
                 if not data.has_key(date_with_tz):
@@ -255,15 +279,15 @@ def import_from_dump(request):
                 tag.save()
                 tag.questions.add(Question.objects.get(id=question.id))
                 tag.save()
-            try:
-                tag = Tag.objects.get(id=int(line_data[7]))
-                tag.questions.add(Question.objects.get(id=question.id))
-                tag.save()
-            except Tag.DoesNotExist:
-                tag = Tag(id=int(line_data[7]), text=line_data[8])
-                tag.save()
-                tag.questions.add(Question.objects.get(id=question.id))
-                tag.save()
+            # try:
+            #     tag = Tag.objects.get(id=int(line_data[7]))
+            #     tag.questions.add(Question.objects.get(id=question.id))
+            #     tag.save()
+            # except Tag.DoesNotExist:
+            #     tag = Tag(id=int(line_data[7]), text=line_data[8])
+            #     tag.save()
+            #     tag.questions.add(Question.objects.get(id=question.id))
+            #     tag.save()
             try:
                 category = Category.objects.get(id=int(line_data[5]))
                 category.questions.add(Question.objects.get(id=question.id))
@@ -273,14 +297,14 @@ def import_from_dump(request):
                 category.save()
                 category.questions.add(Question.objects.get(id=question.id))
                 category.save()
-            try:
-                category = Category.objects.get(id=int(line_data[7]))
-                category.questions_parent.add(Question.objects.get(id=question.id))
-                category.save()
-            except Category.DoesNotExist:
-                category = Category(id=int(line_data[7]), name=line_data[8])
-                category.save()
-                category.questions_parent.add(Question.objects.get(id=question.id))
-                category.save()
+            # try:
+            #     category = Category.objects.get(id=int(line_data[7]))
+            #     category.questions_parent.add(Question.objects.get(id=question.id))
+            #     category.save()
+            # except Category.DoesNotExist:
+            #     category = Category(id=int(line_data[7]), name=line_data[8])
+            #     category.save()
+            #     category.questions_parent.add(Question.objects.get(id=question.id))
+            #     category.save()
 
     return HttpResponse("<html><body><h4>Lol</h4></body></html>")
