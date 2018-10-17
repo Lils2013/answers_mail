@@ -177,24 +177,30 @@ def graph(request, pk, time_interval):
             end_date = timezone.localize(end_date)
             start_date = end_date - timedelta(days=1)
             for i in range(24 * 1):
-                date_iter = start_date.replace(minute=0, second=0) + timedelta(hours=i + 1)
-                counters = Counter.objects.all().filter(datetime=date_iter, tag_id=pk)
+                date_iter_start = start_date.replace(minute=0, second=0) + timedelta(hours=i)
+                date_iter_end = date_iter_start + timedelta(hours=1)
+                counters = Counter.objects.all().filter(datetime=date_iter_end, tag_id=pk)
                 if counters:
-                    data[date_iter.isoformat()] = counters.aggregate(num_of_questions=Sum('count'))['num_of_questions']
+                    data[date_iter_start.isoformat()] = counters.aggregate(num_of_questions=Sum('count'))[
+                        'num_of_questions']
                 else:
-                    data[date_iter.isoformat()] = 0
+                    data[date_iter_start.isoformat()] = 0
         elif time_interval == '7-d':
             end_date = datetime.strptime('2018-01-08T00:00:00', "%Y-%m-%dT%H:%M:%S")
             timezone = pytz.timezone("Europe/Moscow")
             end_date = timezone.localize(end_date)
             start_date = end_date - timedelta(days=7)
-            for i in range(24 * 7):
-                date_iter = start_date.replace(minute=0, second=0) + timedelta(hours=i + 1)
-                counters = Counter.objects.all().filter(datetime=date_iter, tag_id=pk)
+            for i in range(6 * 7):
+                date_iter_start = start_date.replace(minute=0, second=0) + timedelta(hours=4 * i)
+                date_iter_end = date_iter_start + timedelta(hours=4)
+                counters = Counter.objects.all().filter(datetime__in=(
+                    date_iter_end, date_iter_end - timedelta(hours=1), date_iter_end - timedelta(hours=2),
+                    date_iter_end - timedelta(hours=3)), tag_id=pk)
                 if counters:
-                    data[date_iter.isoformat()] = counters.aggregate(num_of_questions=Sum('count'))['num_of_questions']
+                    data[date_iter_start.isoformat()] = counters.aggregate(num_of_questions=Sum('count'))[
+                        'num_of_questions']
                 else:
-                    data[date_iter.isoformat()] = 0
+                    data[date_iter_start.isoformat()] = 0
         elif time_interval == '1-m':
             end_date = datetime.strptime('2018-02-02T00:00:00', "%Y-%m-%dT%H:%M:%S")
             timezone = pytz.timezone("Europe/Moscow")
@@ -219,7 +225,8 @@ def graph(request, pk, time_interval):
                     data[date_with_tz] = counter.count
                 else:
                     data[date_with_tz] = data[date_with_tz] + counter.count
-        return Response(data)
+        data_with_name = {'data': data, 'name': Tag.objects.get(pk=pk).text}
+        return Response([data_with_name])
 
 
 @api_view(['GET'])
@@ -243,7 +250,6 @@ def tags(request, page=1, page_size=50):
 def import_from_dump(request):
     with open("otvet-queastions-2018-2.txt") as tsvfile:
         for line in tsvfile:
-            # print(line)
             line_data = re.split('\t', line)
             question_text = line_data[9].rstrip().lstrip()
             if (len(line_data) == 11):
@@ -251,10 +257,8 @@ def import_from_dump(request):
             created_at = datetime.strptime(line_data[1], "%Y-%m-%d %H:%M:%S")
             timezone = pytz.timezone("Europe/Moscow")
             created_at = timezone.localize(created_at)
-            # print(created_at.isoformat())
             question = Question(text=question_text, rating=int(line_data[2]), created_at=created_at,
                                 id=int(line_data[0]))
-            # print(question.text)
             question.save()
             try:
                 tag = Tag.objects.get(id=int(line_data[5]))

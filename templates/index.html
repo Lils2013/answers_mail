@@ -7,6 +7,11 @@
     <meta name="keywords" content="vuejs, django, crudapp, restapi">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <style>
+        .modal {
+            overflow: auto !important;
+        }
+    </style>
 </head>
 <body>
 <div id="starting">
@@ -32,13 +37,13 @@
                 </tr>
                 </tbody>
             </table>
-            <div class="modal fade" id="editArticleModal" tabindex="-1" role="dialog"
+            <div class="modal fade" id="tagDetailsModal" tabindex="-1" role="dialog"
                  aria-labelledby="exampleModalLongTitle" aria-hidden="true">
                 <div class="modal-dialog modal-lg" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title" id="exampleModalLongTitle">Tag Details</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <button type="button" v-on:click="clearCurrentTagsOnChart()" class="close" data-dismiss="modal" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
@@ -49,6 +54,9 @@
                             <button class="btn btn-info" v-on:click="getWeek()">Week</button>
                             <button class="btn btn-info" v-on:click="getMonth()">Month</button>
                             <button class="btn btn-info" v-on:click="getAllTime()">All Time</button>
+                            <br/>
+                            <br/>
+                            <button class="btn btn-info" v-on:click="compare()">Compare</button>
                             <h2>Questions:</h2>
                             <table class="table">
                                 <thead>
@@ -66,6 +74,34 @@
                                 </tr>
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="loading" v-if="loading===true">Loading&#8230;</div>
+            </div>
+            <div class="modal fade" id="tagCompareModal" tabindex="-1" role="dialog"
+                 aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLongTitle">Tag Details</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="search-wrapper">
+                                <input type="text" v-model="search" placeholder="Search tag.."/>
+                            </div>
+                            <div class="wrapper">
+                                <div v-for="tag in tags">
+                                    <div class="card" v-if="currentTagsIdsOnChart.indexOf(tag.id) === -1">
+                                        <a href="#" onClick="return false;" v-on:click="addToGraph(tag.id)">
+                                            ${tag.text}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -99,10 +135,12 @@
             tags: [],
             loading: false,
             currentTag: {},
-            message: null,
+            search: '',
             newArticle: {'article_heading': null, 'article_body': null},
             chartData: [],
             questions: [],
+            period: '',
+            currentTagsIdsOnChart: [],
         },
         mounted: function () {
             this.getTags();
@@ -125,7 +163,7 @@
                 this.$http.get(`/questions/${id}`)
                     .then((response) => {
                         this.questions = response.data;
-                        $("#editArticleModal").modal('show');
+                        $("#tagDetailsModal").modal('show');
                         this.loading = false;
                     })
                     .catch((err) => {
@@ -135,8 +173,12 @@
                 this.$http.get(`/graph/${id}/1-d`)
                     .then((response) => {
                         this.chartData = response.data;
+                        if (this.currentTagsIdsOnChart.indexOf(id) === -1) {
+                            this.currentTagsIdsOnChart.push(id);
+                        }
                         this.loading = false;
-                        this.currentTag = id
+                        this.currentTag = id;
+                        this.period = '1-d';
                     })
                     .catch((err) => {
                         this.loading = false;
@@ -148,6 +190,10 @@
                     .then((response) => {
                         this.chartData = response.data;
                         this.loading = false;
+                        this.period = '1-d';
+                        if (this.currentTagsIdsOnChart.indexOf(this.currentTag) === -1) {
+                            this.currentTagsIdsOnChart.push(this.currentTag);
+                        }
                     })
                     .catch((err) => {
                         this.loading = false;
@@ -159,6 +205,10 @@
                     .then((response) => {
                         this.chartData = response.data;
                         this.loading = false;
+                        this.period = '7-d';
+                        if (this.currentTagsIdsOnChart.indexOf(this.currentTag) === -1) {
+                            this.currentTagsIdsOnChart.push(this.currentTag);
+                        }
                     })
                     .catch((err) => {
                         this.loading = false;
@@ -170,6 +220,10 @@
                     .then((response) => {
                         this.chartData = response.data;
                         this.loading = false;
+                        this.period = '1-m';
+                        if (this.currentTagsIdsOnChart.indexOf(this.currentTag) === -1) {
+                            this.currentTagsIdsOnChart.push(this.currentTag);
+                        }
                     })
                     .catch((err) => {
                         this.loading = false;
@@ -181,14 +235,39 @@
                     .then((response) => {
                         this.chartData = response.data;
                         this.loading = false;
+                        this.period = 'a';
+                        if (this.currentTagsIdsOnChart.indexOf(this.currentTag) === -1) {
+                            this.currentTagsIdsOnChart.push(this.currentTag);
+                        }
                     })
                     .catch((err) => {
                         this.loading = false;
                         console.log(err);
                     })
             },
+            compare: function () {
+                $("#tagCompareModal").modal('show');
+            },
             toQuestion: function (id) {
                 return "https://otvet.mail.ru/question/" + id;
+            },
+            clearCurrentTagsOnChart: function () {
+                this.currentTagsIdsOnChart = [];
+            },
+            addToGraph: function (id) {
+                this.$http.get(`/graph/${id}/${this.period}`)
+                    .then((response) => {
+                        this.chartData.push(response.data[0]);
+                        this.loading = false;
+                        $("#tagCompareModal").modal('hide');
+                        if (this.currentTagsIdsOnChart.indexOf(id) === -1) {
+                            this.currentTagsIdsOnChart.push(id);
+                        }
+                    })
+                    .catch((err) => {
+                        this.loading = false;
+                        console.log(err);
+                    })
             },
         }
 
