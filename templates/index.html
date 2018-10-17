@@ -43,7 +43,8 @@
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title" id="exampleModalLongTitle">Tag Details</h5>
-                            <button type="button" v-on:click="clearCurrentTagsOnChart()" class="close" data-dismiss="modal" aria-label="Close">
+                            <button type="button" v-on:click="clearCurrentTagsOnChart()" class="close"
+                                    data-dismiss="modal" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
@@ -90,9 +91,9 @@
                             </button>
                         </div>
                         <div class="modal-body">
-                            <div class="search-wrapper">
-                                <input type="text" v-model="search" placeholder="Search tag.."/>
-                            </div>
+{#                            <div class="search-wrapper">#}
+{#                                <input type="text" v-model="search" placeholder="Search tag.."/>#}
+{#                            </div>#}
                             <div class="wrapper">
                                 <div v-for="tag in tags">
                                     <div class="card" v-if="currentTagsIdsOnChart.indexOf(tag.id) === -1">
@@ -191,9 +192,7 @@
                         this.chartData = response.data;
                         this.loading = false;
                         this.period = '1-d';
-                        if (this.currentTagsIdsOnChart.indexOf(this.currentTag) === -1) {
-                            this.currentTagsIdsOnChart.push(this.currentTag);
-                        }
+                        this.currentTagsIdsOnChart = [this.currentTag];
                     })
                     .catch((err) => {
                         this.loading = false;
@@ -206,9 +205,7 @@
                         this.chartData = response.data;
                         this.loading = false;
                         this.period = '7-d';
-                        if (this.currentTagsIdsOnChart.indexOf(this.currentTag) === -1) {
-                            this.currentTagsIdsOnChart.push(this.currentTag);
-                        }
+                        this.currentTagsIdsOnChart = [this.currentTag];
                     })
                     .catch((err) => {
                         this.loading = false;
@@ -221,9 +218,7 @@
                         this.chartData = response.data;
                         this.loading = false;
                         this.period = '1-m';
-                        if (this.currentTagsIdsOnChart.indexOf(this.currentTag) === -1) {
-                            this.currentTagsIdsOnChart.push(this.currentTag);
-                        }
+                        this.currentTagsIdsOnChart = [this.currentTag];
                     })
                     .catch((err) => {
                         this.loading = false;
@@ -236,9 +231,7 @@
                         this.chartData = response.data;
                         this.loading = false;
                         this.period = 'a';
-                        if (this.currentTagsIdsOnChart.indexOf(this.currentTag) === -1) {
-                            this.currentTagsIdsOnChart.push(this.currentTag);
-                        }
+                        this.currentTagsIdsOnChart = [this.currentTag];
                     })
                     .catch((err) => {
                         this.loading = false;
