@@ -18,14 +18,14 @@ class Question(models.Model):
     category = models.ForeignKey(Category, related_name='questions', default=None, blank=True, null=True)
     parent_category = models.ForeignKey(Category, related_name='questions_parent', default=None, blank=True, null=True)
 
-    # def __unicode__(self):
-    #     result = '{0} {1}'.format(
-    #         self.created_at.ctime(),
-    #         self.text[:30])
-    #     return result
+    def __unicode__(self):
+        result = '{0} {1}'.format(
+            self.created_at.ctime(),
+            self.text[:30])
+        return result
 
-    class Meta:
-        ordering = ['created_at']
+    # class Meta:
+    #     ordering = ['created_at']
 
 
 class Tag(models.Model):
@@ -39,5 +39,12 @@ class Tag(models.Model):
     #         self.text[:30])
     #     return result
 
-    class Meta:
-        ordering = ['created_at']
+    # class Meta:
+    #     ordering = ['created_at']
+
+
+class Counter(models.Model):
+    datetime = models.DateTimeField(auto_now_add=False)
+    tag = models.ForeignKey(Tag, related_name='counters')
+    category = models.ForeignKey(Category)
+    count = models.IntegerField()

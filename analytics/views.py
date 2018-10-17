@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import pytz
 import requests
 from django.core.paginator import Paginator
+from django.db.models import F, Sum
 from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.decorators import api_view
@@ -14,7 +15,7 @@ from rest_framework.response import Response
 
 # Create your views here.
 from analytics.api.serializers import QuestionSerializer
-from analytics.models import Category
+from analytics.models import Category, Counter
 from analytics.models import Question, Tag
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 import csv
@@ -76,7 +77,7 @@ def update_and_show_status(report, current_status):
             report[k] = v
         else:
             report[k] = report[k] + v
-    sorted_by_value = sorted(current_status.items(), key=lambda kv: kv[1],  reverse=True)
+    sorted_by_value = sorted(current_status.items(), key=lambda kv: kv[1], reverse=True)
     length = min(10, len(sorted_by_value))
     for i in range(length):
         print("{}: {}".format(sorted_by_value[i][1], sorted_by_value[i][0]))
@@ -91,7 +92,7 @@ def import_from_api(page_from, amount):
     report = {}
     try:
         if pages != 0:
-            for i in range(pages+1):
+            for i in range(pages + 1):
                 current_status = {}
                 if i == pages:
                     page_size = last_page_size
@@ -99,7 +100,7 @@ def import_from_api(page_from, amount):
                     data = get_api_page(page_from, page_size)
                 except Exception as e:
                     print("***** PROGRESS *****")
-                    print("page: {}/{}".format(i+1, pages+1))
+                    print("page: {}/{}".format(i + 1, pages + 1))
                     print("Error: {}".format(e.message))
                     page_from += page_size
                     continue
@@ -115,7 +116,7 @@ def import_from_api(page_from, amount):
                     page_from = int(q['id'])
 
                 print("***** PROGRESS *****")
-                print("page: {}/{}".format(i+1, pages+1))
+                print("page: {}/{}".format(i + 1, pages + 1))
                 report = update_and_show_status(report, current_status)
                 print("\n")
     finally:
@@ -123,6 +124,7 @@ def import_from_api(page_from, amount):
         for (k, v) in sorted_by_value:
             html = html.format('{}  -  [{}] <br/> {}'.format(v, k, "{}"))
     return html
+
 
 # 210800000-88111
 
@@ -141,7 +143,7 @@ def import_from_api_view(request, page_from=-1, page_to=-1, amount=-1):
     if page_from != -1 and page_to == -1 and amount != -1:
         info = import_from_api(page_from, amount)
         work_time = datetime.now() - start_time
-        html = html.format(page_from, amount, str(work_time).split('.')[0] ,info)
+        html = html.format(page_from, amount, str(work_time).split('.')[0], info)
     else:
         html = "<html><body><h4>Не указан диапазон id, которые нужно скачать. Пример:</h4>" \
                "<br/>page_from-amount:  {}210700000-1000</body></html>".format(
@@ -155,86 +157,68 @@ def tag_detail(request, pk, page=1, page_size=50):
     Retrieve, update or delete a code snippet.
     """
     try:
-        questions = Tag.objects.get(pk=pk).questions.all()
+        questions = Tag.objects.get(pk=pk).questions.all()[:page_size]
     except Tag.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        paginator = Paginator(questions, page_size)
-        serializer = QuestionSerializer(paginator.page(page), many=True)
+        # paginator = Paginator(questions, page_size)
+        serializer = QuestionSerializer(questions, many=True)
         return Response(serializer.data)
 
 
 @api_view(['GET'])
 def graph(request, pk, time_interval):
     if request.method == 'GET':
-        try:
-            questions = Tag.objects.get(pk=pk).questions.all().order_by('-created_at')
-        except Tag.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
         data = {}
         if time_interval == '1-d':
             end_date = datetime.strptime('2018-01-02T00:00:00', "%Y-%m-%dT%H:%M:%S")
             timezone = pytz.timezone("Europe/Moscow")
             end_date = timezone.localize(end_date)
             start_date = end_date - timedelta(days=1)
-            start_date = start_date.astimezone(pytz.timezone("UTC"))
-            end_date = end_date.astimezone(pytz.timezone("UTC"))
-            questions = questions.filter(created_at__range=(start_date, end_date))
-            start_date = start_date.astimezone(pytz.timezone("Europe/Moscow"))
-            end_date = end_date.astimezone(pytz.timezone("Europe/Moscow"))
             for i in range(24 * 1):
-                data[(start_date.replace(minute=0, second=0) + timedelta(hours=i + 1)).isoformat()] = 0
-            for question in questions:
-                datetime_hour = (question.created_at.astimezone(timezone).replace(minute=0, second=0) + timedelta(
-                    hours=1)).isoformat()
-                if not data.has_key(datetime_hour):
-                    data[datetime_hour] = 1
+                date_iter = start_date.replace(minute=0, second=0) + timedelta(hours=i + 1)
+                counters = Counter.objects.all().filter(datetime=date_iter, tag_id=pk)
+                if counters:
+                    data[date_iter.isoformat()] = counters.aggregate(num_of_questions=Sum('count'))['num_of_questions']
                 else:
-                    data[datetime_hour] = data[datetime_hour] + 1
+                    data[date_iter.isoformat()] = 0
         elif time_interval == '7-d':
             end_date = datetime.strptime('2018-01-08T00:00:00', "%Y-%m-%dT%H:%M:%S")
             timezone = pytz.timezone("Europe/Moscow")
             end_date = timezone.localize(end_date)
             start_date = end_date - timedelta(days=7)
-            start_date = start_date.astimezone(pytz.timezone("UTC"))
-            end_date = end_date.astimezone(pytz.timezone("UTC"))
-            questions = questions.filter(created_at__range=(start_date, end_date))
-            start_date = start_date.astimezone(pytz.timezone("Europe/Moscow"))
-            end_date = end_date.astimezone(pytz.timezone("Europe/Moscow"))
             for i in range(24 * 7):
-                data[(start_date.replace(minute=0, second=0) + timedelta(hours=i + 1)).isoformat()] = 0
-            for question in questions:
-                datetime_hour = (question.created_at.astimezone(timezone).replace(minute=0, second=0) + timedelta(
-                    hours=1)).isoformat()
-                if not data.has_key(datetime_hour):
-                    data[datetime_hour] = 1
+                date_iter = start_date.replace(minute=0, second=0) + timedelta(hours=i + 1)
+                counters = Counter.objects.all().filter(datetime=date_iter, tag_id=pk)
+                if counters:
+                    data[date_iter.isoformat()] = counters.aggregate(num_of_questions=Sum('count'))['num_of_questions']
                 else:
-                    data[datetime_hour] = data[datetime_hour] + 1
+                    data[date_iter.isoformat()] = 0
         elif time_interval == '1-m':
             end_date = datetime.strptime('2018-02-02T00:00:00', "%Y-%m-%dT%H:%M:%S")
             timezone = pytz.timezone("Europe/Moscow")
             end_date = timezone.localize(end_date)
             start_date = end_date - timedelta(days=30)
-            start_date = start_date.astimezone(pytz.timezone("UTC"))
-            end_date = end_date.astimezone(pytz.timezone("UTC"))
-            questions = questions.filter(created_at__range=(start_date, end_date))
-            start_date = start_date.astimezone(pytz.timezone("Europe/Moscow"))
-            end_date = end_date.astimezone(pytz.timezone("Europe/Moscow"))
-            for question in questions:
-                date_with_tz = question.created_at.astimezone(timezone).date().isoformat()
-                if not data.has_key(date_with_tz):
-                    data[date_with_tz] = 1
+            for i in range(30):
+                date_iter_start = start_date.replace(hour=0, minute=0, second=0) + timedelta(hours=24 * i)
+                date_iter_end = date_iter_start + timedelta(hours=24)
+                counters = Counter.objects.all().filter(
+                    datetime__range=(date_iter_start + timedelta(hours=1), date_iter_end), tag_id=pk)
+                if counters:
+                    data[date_iter_start.isoformat()] = counters.aggregate(num_of_questions=Sum('count'))[
+                        'num_of_questions']
                 else:
-                    data[date_with_tz] = data[date_with_tz] + 1
+                    data[date_iter_start.isoformat()] = 0
         else:
-            timezone = pytz.timezone("Europe/Moscow")
-            for question in questions:
-                date_with_tz = question.created_at.astimezone(timezone).date().isoformat()
+            for counter in Counter.objects.all().filter(tag_id=pk):
+                timezone = pytz.timezone("Europe/Moscow")
+                date_with_tz = (counter.datetime.astimezone(timezone) - timedelta(hours=1)).replace(hour=0, minute=0,
+                                                                                                    second=0).isoformat()
                 if not data.has_key(date_with_tz):
-                    data[date_with_tz] = 1
+                    data[date_with_tz] = counter.count
                 else:
-                    data[date_with_tz] = data[date_with_tz] + 1
+                    data[date_with_tz] = data[date_with_tz] + counter.count
         return Response(data)
 
 
@@ -244,7 +228,9 @@ def tags(request, page=1, page_size=50):
     Retrieve, update or delete a code snippet.
     """
     try:
-        tags = sorted(Tag.objects.all(), key=lambda i: i.questions.count(), reverse=True)
+        tags = sorted(Tag.objects.all(),
+                      key=lambda i: i.counters.aggregate(num_of_questions=Sum('count'))['num_of_questions'],
+                      reverse=True)
     except Tag.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -306,5 +292,18 @@ def import_from_dump(request):
             #     category.save()
             #     category.questions_parent.add(Question.objects.get(id=question.id))
             #     category.save()
+            # try:
+            counter = Counter.objects.all().filter(category=category, tag=tag,
+                                                   datetime=created_at.replace(minute=0, second=0)
+                                                            + timedelta(hours=1))
+            if not counter:
+                counter = Counter(category=category, tag=tag,
+                                  datetime=created_at.replace(minute=0, second=0) + timedelta(hours=1), count=1)
+                counter.save()
+            else:
+                counter = counter[0]
+                counter.count = F('count') + 1
+                counter.save()
+            # except Counter.DoesNotExist:
 
     return HttpResponse("<html><body><h4>Lol</h4></body></html>")
