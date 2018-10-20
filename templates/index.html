@@ -7,6 +7,11 @@
     <meta name="keywords" content="vuejs, django, crudapp, restapi">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <style>
+        .modal {
+            overflow: auto !important;
+        }
+    </style>
 </head>
 <body>
 <div id="starting">
@@ -28,28 +33,31 @@
                     <td>${tag.text}</td>
                     <td>
                         <button class="btn btn-info" v-on:click="getTag(tag.id)">View Details</button>
-                        {#                  <button class="btn btn-danger" v-on:click="deleteArticle(article.article_id)">Delete</button>#}
                     </td>
                 </tr>
                 </tbody>
             </table>
-            <div class="modal fade" id="editArticleModal" tabindex="-1" role="dialog"
+            <div class="modal fade" id="tagDetailsModal" tabindex="-1" role="dialog"
                  aria-labelledby="exampleModalLongTitle" aria-hidden="true">
                 <div class="modal-dialog modal-lg" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title" id="exampleModalLongTitle">Tag Details</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <button type="button" v-on:click="clearCurrentTagsOnChart()" class="close"
+                                    data-dismiss="modal" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
                         <div class="modal-body">
                             <h2>Time Trend</h2>
-                            <line-chart :data="chartData"></line-chart>
+                            <line-chart :points="false" :data="chartData"></line-chart>
                             <button class="btn btn-info" v-on:click="getDay()">Day</button>
                             <button class="btn btn-info" v-on:click="getWeek()">Week</button>
                             <button class="btn btn-info" v-on:click="getMonth()">Month</button>
                             <button class="btn btn-info" v-on:click="getAllTime()">All Time</button>
+                            <br/>
+                            <br/>
+                            <button class="btn btn-info" v-on:click="compare()">Compare</button>
                             <h2>Questions:</h2>
                             <table class="table">
                                 <thead>
@@ -61,69 +69,48 @@
                                 <tbody>
                                 <tr v-for="question in questions">
                                     <th scope="row">
-                                        <div style="cursor: pointer; color:blue; text-decoration:underline;"
-                                             v-on:click="toQuestion(question.id)">${question.id}
-                                        </div>
+                                        <a :href="toQuestion(question.id)">${question.id}</a>
                                     </th>
                                     <td>${question.text}</td>
                                 </tr>
                                 </tbody>
                             </table>
                         </div>
-
-
-                        {#                        <form v-on:submit.prevent="updateArticle()">#}
-                        {#                            <div class="modal-body">#}
-                        {#                                <div class="form-group">#}
-                        {#                                    <label for="article_heading">Article Heading</label>#}
-                        {#                                    <input#}
-                        {#                                            type="text"#}
-                        {#                                            class="form-control"#}
-                        {#                                            id="article_heading"#}
-                        {#                                            placeholder="Enter Article Heading"#}
-                        {#                                            v-model="currentArticle.article_heading"#}
-                        {#                                            required="required">#}
-                        {#                                </div>#}
-                        {#                                <div class="form-group">#}
-                        {#                                    <label for="article_body">Article Body</label>#}
-                        {#                                    <textarea#}
-                        {#                                            class="form-control"#}
-                        {#                                            id="article_body"#}
-                        {#                                            placeholder="Enter Article Body"#}
-                        {#                                            v-model="currentArticle.article_body"#}
-                        {#                                            required="required"#}
-                        {#                                            rows="3"></textarea>#}
-                        {#                                </div>#}
-                        {#                            </div>#}
-                        {#                            <div class="modal-footer">#}
-                        {#                                <button type="button" class="btn btn-secondary m-progress" data-dismiss="modal">Close#}
-                        {#                                </button>#}
-                        {#                                <button type="submit" class="btn btn-primary">Save changes</button>#}
-                        {#                            </div>#}
-                        {#                        </form>#}
                     </div>
                 </div>
                 <div class="loading" v-if="loading===true">Loading&#8230;</div>
             </div>
-            {#            <table class="table">#}
-            {#                <thead>#}
-            {#                <tr>#}
-            {#                    <th scope="col">#</th>#}
-            {#                    <th scope="col">Question</th>#}
-            {#                </tr>#}
-            {#                </thead>#}
-            {#                <tbody>#}
-            {#                <tr v-for="question in questions">#}
-            {#                    <th scope="row">${question.id}</th>#}
-            {#                    <td>${question.text}</td>#}
-            {#                </tr>#}
-            {#                </tbody>#}
-            {#            </table>#}
+            <div class="modal fade" id="tagCompareModal" tabindex="-1" role="dialog"
+                 aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLongTitle">Tag Details</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+{#                            <div class="search-wrapper">#}
+{#                                <input type="text" v-model="search" placeholder="Search tag.."/>#}
+{#                            </div>#}
+                            <div class="wrapper">
+                                <div v-for="tag in tags">
+                                    <div class="card" v-if="currentTagsIdsOnChart.indexOf(tag.id) === -1">
+                                        <a href="#" onClick="return false;" v-on:click="addToGraph(tag.id)">
+                                            ${tag.text}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="loading" v-if="loading===true">Loading&#8230;</div>
+            </div>
         </div>
     </div>
     <div class="loading" v-if="loading===true">Loading&#8230;</div>
-    {#    <line-chart :data="chartData"></line-chart>#}
-
 </div>
 
 
@@ -149,10 +136,12 @@
             tags: [],
             loading: false,
             currentTag: {},
-            message: null,
+            search: '',
             newArticle: {'article_heading': null, 'article_body': null},
             chartData: [],
             questions: [],
+            period: '',
+            currentTagsIdsOnChart: [],
         },
         mounted: function () {
             this.getTags();
@@ -172,20 +161,10 @@
             },
             getTag: function (id) {
                 this.loading = true;
-                this.$http.get(`/api/tags/${id}/`)
-                    .then((response) => {
-                        this.currentArticle = response.data;
-                        $("#editArticleModal").modal('show');
-                        {#this.chartData = [["AAA", 4], ["A", 2], ["Mar", 10], ["Apr", 5], ["May", 3]],#}
-                        this.loading = false;
-                    })
-                    .catch((err) => {
-                        this.loading = false;
-                        console.log(err);
-                    });
                 this.$http.get(`/questions/${id}`)
                     .then((response) => {
                         this.questions = response.data;
+                        $("#tagDetailsModal").modal('show');
                         this.loading = false;
                     })
                     .catch((err) => {
@@ -195,8 +174,12 @@
                 this.$http.get(`/graph/${id}/1-d`)
                     .then((response) => {
                         this.chartData = response.data;
+                        if (this.currentTagsIdsOnChart.indexOf(id) === -1) {
+                            this.currentTagsIdsOnChart.push(id);
+                        }
                         this.loading = false;
-                        this.currentTag = id
+                        this.currentTag = id;
+                        this.period = '1-d';
                     })
                     .catch((err) => {
                         this.loading = false;
@@ -208,6 +191,8 @@
                     .then((response) => {
                         this.chartData = response.data;
                         this.loading = false;
+                        this.period = '1-d';
+                        this.currentTagsIdsOnChart = [this.currentTag];
                     })
                     .catch((err) => {
                         this.loading = false;
@@ -219,6 +204,8 @@
                     .then((response) => {
                         this.chartData = response.data;
                         this.loading = false;
+                        this.period = '7-d';
+                        this.currentTagsIdsOnChart = [this.currentTag];
                     })
                     .catch((err) => {
                         this.loading = false;
@@ -230,6 +217,8 @@
                     .then((response) => {
                         this.chartData = response.data;
                         this.loading = false;
+                        this.period = '1-m';
+                        this.currentTagsIdsOnChart = [this.currentTag];
                     })
                     .catch((err) => {
                         this.loading = false;
@@ -241,14 +230,37 @@
                     .then((response) => {
                         this.chartData = response.data;
                         this.loading = false;
+                        this.period = 'a';
+                        this.currentTagsIdsOnChart = [this.currentTag];
                     })
                     .catch((err) => {
                         this.loading = false;
                         console.log(err);
                     })
             },
+            compare: function () {
+                $("#tagCompareModal").modal('show');
+            },
             toQuestion: function (id) {
-                window.location.href = "https://otvet.mail.ru/question/" + id;
+                return "https://otvet.mail.ru/question/" + id;
+            },
+            clearCurrentTagsOnChart: function () {
+                this.currentTagsIdsOnChart = [];
+            },
+            addToGraph: function (id) {
+                this.$http.get(`/graph/${id}/${this.period}`)
+                    .then((response) => {
+                        this.chartData.push(response.data[0]);
+                        this.loading = false;
+                        $("#tagCompareModal").modal('hide');
+                        if (this.currentTagsIdsOnChart.indexOf(id) === -1) {
+                            this.currentTagsIdsOnChart.push(id);
+                        }
+                    })
+                    .catch((err) => {
+                        this.loading = false;
+                        console.log(err);
+                    })
             },
         }
 
