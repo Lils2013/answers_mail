@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'analytics.apps.AnalyticsConfig',
     'rest_framework',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -125,3 +126,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+
+
+CELERY_BROKER_URL = 'redis://localhost:6379/3'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/3'
