@@ -17,10 +17,6 @@ from rest_framework.response import Response
 from analytics.api.serializers import QuestionSerializer
 from analytics.models import Category, Counter
 from analytics.models import Question, Tag
-from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
-import csv
-import re
-import json
 
 
 def get_api_page(page_from, page_size):
