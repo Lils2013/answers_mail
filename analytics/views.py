@@ -172,44 +172,16 @@ def graph(request):
         pk = int(pk)
     except ValueError:
         return Response({'status': 500, 'error': 'incorrect tagid'})
+    timezone = pytz.timezone("Europe/Moscow")
     time_interval = request.GET.get('date', None)
     data = {}
-    if time_interval == 'now 1-d':
-        end_date = datetime.strptime('2018-01-02T00:00:00', "%Y-%m-%dT%H:%M:%S")
-        timezone = pytz.timezone("Europe/Moscow")
+    try:
+        start_date, end_date = time_interval.split(" ")
+        end_date = datetime.strptime(end_date, "%Y-%m-%d")
+        start_date = datetime.strptime(start_date, "%Y-%m-%d")
         end_date = timezone.localize(end_date)
-        start_date = end_date - timedelta(days=1)
-        for i in range(24 * 1):
-            date_iter_start = start_date.replace(minute=0, second=0) + timedelta(hours=i)
-            date_iter_end = date_iter_start + timedelta(hours=1)
-            counters = Counter.objects.all().filter(datetime=date_iter_end, tag_id=pk)
-            if counters:
-                data[date_iter_start.isoformat()] = counters.aggregate(num_of_questions=Sum('count'))[
-                    'num_of_questions']
-            else:
-                data[date_iter_start.isoformat()] = 0
-    elif time_interval == 'now 7-d':
-        end_date = datetime.strptime('2018-01-08T00:00:00', "%Y-%m-%dT%H:%M:%S")
-        timezone = pytz.timezone("Europe/Moscow")
-        end_date = timezone.localize(end_date)
-        start_date = end_date - timedelta(days=7)
-        for i in range(6 * 7):
-            date_iter_start = start_date.replace(minute=0, second=0) + timedelta(hours=4 * i)
-            date_iter_end = date_iter_start + timedelta(hours=4)
-            counters = Counter.objects.all().filter(datetime__in=(
-                date_iter_end, date_iter_end - timedelta(hours=1), date_iter_end - timedelta(hours=2),
-                date_iter_end - timedelta(hours=3)), tag_id=pk)
-            if counters:
-                data[date_iter_start.isoformat()] = counters.aggregate(num_of_questions=Sum('count'))[
-                    'num_of_questions']
-            else:
-                data[date_iter_start.isoformat()] = 0
-    elif time_interval == 'now 1-m':
-        end_date = datetime.strptime('2018-02-02T00:00:00', "%Y-%m-%dT%H:%M:%S")
-        timezone = pytz.timezone("Europe/Moscow")
-        end_date = timezone.localize(end_date)
-        start_date = end_date - timedelta(days=30)
-        for i in range(30):
+        start_date = timezone.localize(start_date)
+        for i in range((end_date - start_date).days + 1):
             date_iter_start = start_date.replace(hour=0, minute=0, second=0) + timedelta(hours=24 * i)
             date_iter_end = date_iter_start + timedelta(hours=24)
             counters = Counter.objects.all().filter(
@@ -219,15 +191,57 @@ def graph(request):
                     'num_of_questions']
             else:
                 data[date_iter_start.isoformat()] = 0
-    else:
-        for counter in Counter.objects.all().filter(tag_id=pk):
-            timezone = pytz.timezone("Europe/Moscow")
-            date_with_tz = (counter.datetime.astimezone(timezone) - timedelta(hours=1)).replace(hour=0, minute=0,
-                                                                                                second=0).isoformat()
-            if not data.has_key(date_with_tz):
-                data[date_with_tz] = counter.count
-            else:
-                data[date_with_tz] = data[date_with_tz] + counter.count
+    except ValueError:
+        if time_interval == 'now 1-d':
+            end_date = datetime.strptime('2018-01-02T00:00:00', "%Y-%m-%dT%H:%M:%S")
+            end_date = timezone.localize(end_date)
+            start_date = end_date - timedelta(days=1)
+            for i in range(24 * 1):
+                date_iter_start = start_date.replace(minute=0, second=0) + timedelta(hours=i)
+                date_iter_end = date_iter_start + timedelta(hours=1)
+                counters = Counter.objects.all().filter(datetime=date_iter_end, tag_id=pk)
+                if counters:
+                    data[date_iter_start.isoformat()] = counters.aggregate(num_of_questions=Sum('count'))[
+                        'num_of_questions']
+                else:
+                    data[date_iter_start.isoformat()] = 0
+        elif time_interval == 'now 7-d':
+            end_date = datetime.strptime('2018-01-08T00:00:00', "%Y-%m-%dT%H:%M:%S")
+            end_date = timezone.localize(end_date)
+            start_date = end_date - timedelta(days=7)
+            for i in range(6 * 7):
+                date_iter_start = start_date.replace(minute=0, second=0) + timedelta(hours=4 * i)
+                date_iter_end = date_iter_start + timedelta(hours=4)
+                counters = Counter.objects.all().filter(datetime__in=(
+                    date_iter_end, date_iter_end - timedelta(hours=1), date_iter_end - timedelta(hours=2),
+                    date_iter_end - timedelta(hours=3)), tag_id=pk)
+                if counters:
+                    data[date_iter_start.isoformat()] = counters.aggregate(num_of_questions=Sum('count'))[
+                        'num_of_questions']
+                else:
+                    data[date_iter_start.isoformat()] = 0
+        elif time_interval == 'now 1-m':
+            end_date = datetime.strptime('2018-02-02T00:00:00', "%Y-%m-%dT%H:%M:%S")
+            end_date = timezone.localize(end_date)
+            start_date = end_date - timedelta(days=30)
+            for i in range(30):
+                date_iter_start = start_date.replace(hour=0, minute=0, second=0) + timedelta(hours=24 * i)
+                date_iter_end = date_iter_start + timedelta(hours=24)
+                counters = Counter.objects.all().filter(
+                    datetime__range=(date_iter_start + timedelta(hours=1), date_iter_end), tag_id=pk)
+                if counters:
+                    data[date_iter_start.isoformat()] = counters.aggregate(num_of_questions=Sum('count'))[
+                        'num_of_questions']
+                else:
+                    data[date_iter_start.isoformat()] = 0
+        else:
+            for counter in Counter.objects.all().filter(tag_id=pk):
+                date_with_tz = (counter.datetime.astimezone(timezone) - timedelta(hours=1)).replace(hour=0, minute=0,
+                                                                                                    second=0).isoformat()
+                if not data.has_key(date_with_tz):
+                    data[date_with_tz] = counter.count
+                else:
+                    data[date_with_tz] = data[date_with_tz] + counter.count
     data_with_name = {'data': data, 'name': Tag.objects.get(pk=pk).text}
     return Response([data_with_name])
 
