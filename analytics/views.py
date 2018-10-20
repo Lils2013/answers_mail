@@ -76,6 +76,7 @@ def import_from_api(page_from, amount):
     last_page_size = amount % page_size
     html = '{}'
     report = {}
+    print("importing from api {} pages".format(pages+1))
     try:
         if pages != 0:
             for i in range(pages+1):
