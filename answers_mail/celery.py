@@ -1,7 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 from celery import Celery
-from analytics.tasks import test
 import os
+from analytics.tasks import import_new
 
 # set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'answers_mail.settings')
@@ -17,8 +17,9 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
-    # Calls test('hello') every 10 seconds.
-    sender.add_periodic_task(1.0, test.s('hello'), name='add every 10')
+    # Calls test('hello') every 10 minutes.
+    sender.add_periodic_task(300.0, import_new.s(), name='add new data from API')
+
 
     # # Executes every Monday morning at 7:30 a.m.
     # sender.add_periodic_task(

@@ -171,15 +171,13 @@
                         this.loading = false;
                         console.log(err);
                     });
-                this.$http.get(`/graph/${id}/1-d`)
+                this.$http.get(`/graph/?tagid=${id}&date=now 1-d`)
                     .then((response) => {
                         this.chartData = response.data;
-                        if (this.currentTagsIdsOnChart.indexOf(id) === -1) {
-                            this.currentTagsIdsOnChart.push(id);
-                        }
                         this.loading = false;
                         this.currentTag = id;
-                        this.period = '1-d';
+                        this.period = 'now 1-d';
+                        this.currentTagsIdsOnChart = [this.currentTag];
                     })
                     .catch((err) => {
                         this.loading = false;
@@ -187,11 +185,11 @@
                     })
             },
             getDay: function () {
-                this.$http.get(`/graph/${this.currentTag}/1-d`)
+                this.$http.get(`/graph/?tagid=${this.currentTag}&date=now 1-d`)
                     .then((response) => {
                         this.chartData = response.data;
                         this.loading = false;
-                        this.period = '1-d';
+                        this.period = 'now 1-d';
                         this.currentTagsIdsOnChart = [this.currentTag];
                     })
                     .catch((err) => {
@@ -200,11 +198,11 @@
                     })
             },
             getWeek: function () {
-                this.$http.get(`/graph/${this.currentTag}/7-d`)
+                this.$http.get(`/graph/?tagid=${this.currentTag}&date=now 7-d`)
                     .then((response) => {
                         this.chartData = response.data;
                         this.loading = false;
-                        this.period = '7-d';
+                        this.period = 'now 7-d';
                         this.currentTagsIdsOnChart = [this.currentTag];
                     })
                     .catch((err) => {
@@ -213,11 +211,11 @@
                     })
             },
             getMonth: function () {
-                this.$http.get(`/graph/${this.currentTag}/1-m`)
+                this.$http.get(`/graph/?tagid=${this.currentTag}&date=now 1-m`)
                     .then((response) => {
                         this.chartData = response.data;
                         this.loading = false;
-                        this.period = '1-m';
+                        this.period = 'now 1-m';
                         this.currentTagsIdsOnChart = [this.currentTag];
                     })
                     .catch((err) => {
@@ -226,11 +224,11 @@
                     })
             },
             getAllTime: function () {
-                this.$http.get(`/graph/${this.currentTag}/a`)
+                this.$http.get(`/graph/?tagid=${this.currentTag}&date=all`)
                     .then((response) => {
                         this.chartData = response.data;
                         this.loading = false;
-                        this.period = 'a';
+                        this.period = 'all';
                         this.currentTagsIdsOnChart = [this.currentTag];
                     })
                     .catch((err) => {
@@ -248,7 +246,7 @@
                 this.currentTagsIdsOnChart = [];
             },
             addToGraph: function (id) {
-                this.$http.get(`/graph/${id}/${this.period}`)
+                this.$http.get(`/graph/?tagid=${id}&date=${this.period}`)
                     .then((response) => {
                         this.chartData.push(response.data[0]);
                         this.loading = false;

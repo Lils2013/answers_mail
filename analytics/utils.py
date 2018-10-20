@@ -56,8 +56,10 @@ def update_and_show_status(report, current_status):
             report[k] = report[k] + v
     sorted_by_value = sorted(current_status.items(), key=lambda kv: kv[1], reverse=True)
     length = min(10, len(sorted_by_value))
+    text = ''
     for i in range(length):
-        print("{}: {}".format(sorted_by_value[i][1], sorted_by_value[i][0]))
+        text += "{}: {}\n".format(sorted_by_value[i][1], sorted_by_value[i][0])
+    print(text)
     return report
 
 
