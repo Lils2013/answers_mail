@@ -8,6 +8,7 @@ from django.conf import settings
 
 class Category(models.Model):
     name = models.TextField()
+    questions_count = models.IntegerField(default=None, blank=True, null=True)
 
 
 class Question(models.Model):
@@ -32,6 +33,9 @@ class Tag(models.Model):
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     questions = models.ManyToManyField(Question)
+    questions_count = models.IntegerField(default=None, blank=True, null=True)
+    global_idf = models.FloatField(default=None, blank=True, null=True)
+
     #
     # def __unicode__(self):
     #     result = '{0} {1}'.format(
@@ -48,3 +52,10 @@ class Counter(models.Model):
     tag = models.ForeignKey(Tag, related_name='counters')
     category = models.ForeignKey(Category)
     count = models.IntegerField()
+
+
+class GlobalCounter(models.Model):  # счетчик слово-категория, только за все время
+    tag = models.ForeignKey(Tag)  #
+    category = models.ForeignKey(Category)  #
+    count = models.IntegerField()  # считаем все вхождения слова в вопросы категории
+    local_idf = models.FloatField()
