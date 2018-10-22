@@ -2,12 +2,25 @@
 from datetime import datetime, timedelta
 import pytz
 import requests
-from analytics.models import Question, Category
+from django.db.models import F
+
+from analytics.models import Question, Category, Tag, Counter
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 
 
 def get_api_page(page_from, page_size):
-    url = 'https://otvet.mail.ru/api/v3/questions?limit={}&start_id={}'.format(page_size, page_from)
+    # url = 'https://otvet.mail.ru/api/v3/questions?limit={}&start_id={}'.format(page_size, page_from)
+    url = 'https://otvet.mail.ru/api/v3/question/{}'.format(page_from)
+    r = requests.get(url)
+    if r.status_code == 200:
+        # print(r.text)
+        return r.json()
+    else:
+        raise Exception("server response code {} \n from url: {}".format(r.status_code, url))
+
+
+def get_api(id):
+    url = 'https://otvet.mail.ru/api/v3/question/{}'.format(id)
     r = requests.get(url)
     if r.status_code == 200:
         # print(r.text)
@@ -26,7 +39,22 @@ def parse_question(data):
     cat_title = data['category']['title']
     cat_id = int(data['category']['id'])
     qid = int(data['id'])
-    return dict(id=qid, text='question_text', date=date_floor, cat_title=cat_title, cat_id=cat_id, rating=rating)
+    return dict(id=qid, text=question_text, date=date_floor, cat_title=cat_title, cat_id=cat_id, rating=rating)
+
+
+def update_counter(qdata):
+    counter = Counter.objects.all().filter(category=Category.objects.get(id=qdata['cat_id']), tag=Tag.objects.get(id=qdata['cat_id']),
+                                           datetime=qdata['date'].replace(minute=0, second=0)
+                                                    + timedelta(hours=1))
+    if not counter:
+        counter = Counter(category=Category.objects.get(id=qdata['cat_id']), tag=Tag.objects.get(id=qdata['cat_id']),
+                                           datetime=qdata['date'].replace(minute=0, second=0)
+                                                    + timedelta(hours=1), count=1)
+        counter.save()
+    else:
+        counter = counter[0]
+        counter.count = F('count') + 1
+        counter.save()
 
 
 def save_question(qdata):
@@ -34,7 +62,7 @@ def save_question(qdata):
         question = Question.objects.get(id=qdata['id'])
         return 'already exists'
     except Question.DoesNotExist:
-        question = Question(text=qdata['text'], created_at=qdata['date_floor'], id=qdata['id'], rating=qdata['rating'])
+        question = Question(text=qdata['text'], created_at=qdata['date'], id=qdata['id'], rating=qdata['rating'])
         question.save()
         try:
             category = Category.objects.get(id=qdata['cat_id'])
@@ -45,6 +73,18 @@ def save_question(qdata):
             category.save()
             category.questions.add(Question.objects.get(id=question.id))
             category.save()
+        #     temp hack
+        try:
+            tag = Tag.objects.get(id=qdata['cat_id'])
+            tag.questions.add(Question.objects.get(id=question.id))
+            tag.save()
+        except Tag.DoesNotExist:
+            tag = Tag(id=qdata['cat_id'], text=qdata['cat_title'])
+            tag.save()
+            tag.questions.add(Question.objects.get(id=question.id))
+            tag.save()
+        update_counter(qdata)
+        #     temp hack
         return qdata['cat_title']
 
 

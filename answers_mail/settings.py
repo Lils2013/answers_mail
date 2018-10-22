@@ -132,3 +132,10 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 
 CELERY_BROKER_URL = 'redis://localhost:6379/3'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/3'
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'LOCATION': '127.0.0.1:11211',
+    }
+}
