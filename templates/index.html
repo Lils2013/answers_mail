@@ -12,6 +12,11 @@
         .modal {
             overflow: auto !important;
         }
+
+        #questionstable {
+            table-layout: fixed;
+            word-wrap: break-word;
+        }
     </style>
 </head>
 <body>
@@ -61,7 +66,7 @@
                             <br/>
                             <button class="btn btn-info" v-on:click="compare()">Compare</button>
                             <h2>Questions:</h2>
-                            <table class="table">
+                            <table class="table" id="questionstable">
                                 <thead>
                                 <tr>
                                     <th scope="col">#</th>
@@ -281,7 +286,7 @@
             },
             selectCustomRange: function () {
                 $("#customRangeModal").modal('hide');
-                this.period=this.selectedDates.start.toISOString() + " " + this.selectedDates.end.toISOString();
+                this.period = this.selectedDates.start.toISOString() + " " + this.selectedDates.end.toISOString();
                 this.$http.get(`/graph/?tagid=${this.currentTag}&date=${this.period}`)
                     .then((response) => {
                         this.chartData = response.data;
@@ -302,7 +307,6 @@
                 this.currentTagsIdsOnChart = [];
             },
             addToGraph: function (id) {
-                console.log(id);
                 this.$http.get(`/graph/?tagid=${id}&date=${this.period}`)
                     .then((response) => {
                         this.chartData.push(response.data[0]);
