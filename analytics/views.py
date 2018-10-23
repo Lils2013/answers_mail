@@ -16,6 +16,7 @@ from analytics.models import Question, Tag
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 import re
 from .utils import import_from_api
+import dateutil.parser
 
 
 def import_from_api_view(request, page_from=-1, page_to=-1, amount=-1):
@@ -70,12 +71,13 @@ def graph(request):
     data = {}
     try:
         start_date, end_date = time_interval.split(" ")
-        end_date = datetime.strptime(end_date, "%Y-%m-%d")
-        start_date = datetime.strptime(start_date, "%Y-%m-%d")
-        end_date = timezone.localize(end_date)
-        start_date = timezone.localize(start_date)
+        # end_date = datetime.strptime(end_date, "%Y-%m-%dT%H:%M:%S")
+        end_date = dateutil.parser.parse(end_date)
+        start_date = dateutil.parser.parse(start_date)
+        end_date = end_date.astimezone(timezone)
+        start_date = start_date.astimezone(timezone)
         for i in range((end_date - start_date).days + 1):
-            date_iter_start = start_date.replace(hour=0, minute=0, second=0) + timedelta(hours=24 * i)
+            date_iter_start = start_date + timedelta(hours=24 * i)
             date_iter_end = date_iter_start + timedelta(hours=24)
             counters = Counter.objects.all().filter(
                 datetime__range=(date_iter_start + timedelta(hours=1), date_iter_end), tag_id=pk)
@@ -84,7 +86,7 @@ def graph(request):
                     'num_of_questions']
             else:
                 data[date_iter_start.isoformat()] = 0
-    except ValueError:
+    except ValueError as er:
         if time_interval == 'now 1-d':
             end_date = datetime.strptime('2018-01-02T00:00:00', "%Y-%m-%dT%H:%M:%S")
             end_date = timezone.localize(end_date)
