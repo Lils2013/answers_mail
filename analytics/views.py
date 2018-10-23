@@ -92,7 +92,7 @@ def graph(request):
             end_date = end_date.astimezone(timezone)
             start_date = end_date - timedelta(days=1)
             for i in range(24 * 1):
-                date_iter_start = start_date.replace(minute=0, second=0) + timedelta(hours=i)
+                date_iter_start = start_date.replace(minute=0, second=0, microsecond=0) + timedelta(hours=i)
                 date_iter_end = date_iter_start + timedelta(hours=1)
                 counters = Counter.objects.all().filter(datetime=date_iter_end, tag_id=pk)
                 if counters:
@@ -105,7 +105,7 @@ def graph(request):
             end_date = end_date.astimezone(timezone)
             start_date = end_date - timedelta(days=7)
             for i in range(6 * 7):
-                date_iter_start = start_date.replace(minute=0, second=0) + timedelta(hours=4 * i)
+                date_iter_start = start_date.replace(minute=0, second=0, microsecond=0) + timedelta(hours=4 * i)
                 date_iter_end = date_iter_start + timedelta(hours=4)
                 counters = Counter.objects.all().filter(datetime__in=(
                     date_iter_end, date_iter_end - timedelta(hours=1), date_iter_end - timedelta(hours=2),
@@ -120,7 +120,7 @@ def graph(request):
             end_date = end_date.astimezone(timezone)
             start_date = end_date - timedelta(days=30)
             for i in range(30):
-                date_iter_start = start_date.replace(minute=0, second=0) + timedelta(hours=24 * i)
+                date_iter_start = start_date.replace(minute=0, second=0, microsecond=0) + timedelta(hours=24 * i)
                 date_iter_end = date_iter_start + timedelta(hours=24)
                 counters = Counter.objects.all().filter(
                     datetime__range=(date_iter_start + timedelta(hours=1), date_iter_end), tag_id=pk)
