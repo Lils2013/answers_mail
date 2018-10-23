@@ -88,8 +88,8 @@ def graph(request):
                 data[date_iter_start.isoformat()] = 0
     except ValueError as er:
         if time_interval == 'now 1-d':
-            end_date = datetime.strptime('2018-01-02T00:00:00', "%Y-%m-%dT%H:%M:%S")
-            end_date = timezone.localize(end_date)
+            end_date = datetime.now(pytz.utc)
+            end_date = end_date.astimezone(timezone)
             start_date = end_date - timedelta(days=1)
             for i in range(24 * 1):
                 date_iter_start = start_date.replace(minute=0, second=0) + timedelta(hours=i)
@@ -101,8 +101,8 @@ def graph(request):
                 else:
                     data[date_iter_start.isoformat()] = 0
         elif time_interval == 'now 7-d':
-            end_date = datetime.strptime('2018-01-08T00:00:00', "%Y-%m-%dT%H:%M:%S")
-            end_date = timezone.localize(end_date)
+            end_date = datetime.now(pytz.utc)
+            end_date = end_date.astimezone(timezone)
             start_date = end_date - timedelta(days=7)
             for i in range(6 * 7):
                 date_iter_start = start_date.replace(minute=0, second=0) + timedelta(hours=4 * i)
@@ -116,11 +116,11 @@ def graph(request):
                 else:
                     data[date_iter_start.isoformat()] = 0
         elif time_interval == 'now 1-m':
-            end_date = datetime.strptime('2018-02-02T00:00:00', "%Y-%m-%dT%H:%M:%S")
-            end_date = timezone.localize(end_date)
+            end_date = datetime.now(pytz.utc)
+            end_date = end_date.astimezone(timezone)
             start_date = end_date - timedelta(days=30)
             for i in range(30):
-                date_iter_start = start_date.replace(hour=0, minute=0, second=0) + timedelta(hours=24 * i)
+                date_iter_start = start_date.replace(minute=0, second=0) + timedelta(hours=24 * i)
                 date_iter_end = date_iter_start + timedelta(hours=24)
                 counters = Counter.objects.all().filter(
                     datetime__range=(date_iter_start + timedelta(hours=1), date_iter_end), tag_id=pk)

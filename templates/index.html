@@ -57,9 +57,9 @@
                         <div class="modal-body">
                             <h2>Time Trend</h2>
                             <line-chart :points="false" :data="chartData"></line-chart>
-                            <button class="btn btn-info" v-on:click="getDay()">Day</button>
-                            <button class="btn btn-info" v-on:click="getWeek()">Week</button>
-                            <button class="btn btn-info" v-on:click="getMonth()">Month</button>
+                            <button class="btn btn-info" v-on:click="getDay()">Last Day</button>
+                            <button class="btn btn-info" v-on:click="getWeek()">Last Week</button>
+                            <button class="btn btn-info" v-on:click="getMonth()">Last Month</button>
                             <button class="btn btn-info" v-on:click="getAllTime()">All Time</button>
                             <button class="btn btn-info" v-on:click="showSelectCustomRange()">Custom range</button>
                             <br/>
@@ -69,8 +69,8 @@
                             <table class="table" id="questionstable">
                                 <thead>
                                 <tr>
-                                    <th scope="col">#</th>
-                                    <th scope="col">Question</th>
+                                    <th width="25%" scope="col">#</th>
+                                    <th width="75%" scope="col">Question</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -131,7 +131,7 @@
                                     :select-attribute='dateRangeAttributes' mode='range'
                                     v-model='selectedDates'
                                     :is-inline='isInline'></v-date-picker>
-                            <button class="btn btn-info" v-on:click="selectCustomRange()">Select</button>
+                            <button :disabled="selectedDates==null" class="btn btn-info" v-on:click="selectCustomRange()">Select</button>
                         </div>
                     </div>
                 </div>
@@ -172,10 +172,7 @@
             questions: [],
             period: '',
             currentTagsIdsOnChart: [],
-            selectedDates: {
-                start: new Date(2018, 0, 9),
-                end: new Date(2018, 0, 18)
-            },
+            selectedDates: null,
             datePickerModel: null,
             dateRangeAttributes: {
                 popover: {
@@ -282,7 +279,7 @@
             },
             showSelectCustomRange: function () {
                 $("#customRangeModal").modal('show');
-                this.selectedDate = null;
+                this.selectedDates = null;
             },
             selectCustomRange: function () {
                 $("#customRangeModal").modal('hide');
