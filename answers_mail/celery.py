@@ -18,7 +18,7 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
     # Calls test('hello') every 10 minutes.
-    sender.add_periodic_task(150.0, import_new.s(), name='add new data from API')
+    sender.add_periodic_task(300.0, import_new.s(), name='add new data from API')
 
 
     # # Executes every Monday morning at 7:30 a.m.

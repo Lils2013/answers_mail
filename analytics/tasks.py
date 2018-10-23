@@ -26,7 +26,7 @@ def import_new():
         if acquired:
             start_id = Question.objects.latest('id').id - 1
 
-            pages = 1000
+            pages = 200
             report = {}
             result = []
             print("starting new API import from id {}".format(start_id))
