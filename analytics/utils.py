@@ -38,8 +38,8 @@ def get_api_page(page_from, page_size):
         raise Exception("server response code {} \n from url: {}".format(r.status_code, url))
 
 
-def get_api(id):
-    url = 'https://otvet.mail.ru/api/v3/question/{}'.format(id)
+def get_api(page_from):
+    url = 'https://otvet.mail.ru/api/v3/question/{}'.format(page_from)
     r = requests.get(url)
     if r.status_code == 200:
         # print(r.text)
@@ -84,30 +84,37 @@ def save_question(qdata):
         question = Question(text=qdata['text'], created_at=qdata['date'], id=qdata['id'], rating=qdata['rating'])
         question.save()
         tokens = tokenize_me(qdata['text'])
-        category =  update_category(qdata['cat_title'], qdata['cat_id'], question.id)
+        category = update_category(qdata['cat_title'], qdata['cat_id'], question.id)
         for token in tokens:
-            tag = update_tag(tag_text = token,category_id = category.id,question_id = question.id)
-            update_global_counter(tag_id = tag.id,category_id = category.id)
+            tag = update_tag(tag_text=token, category_id=category.id, question_id=question.id, date=qdata['date'])
+            update_global_counter(tag_id=tag.id, category_id=category.id)
         update_counter(qdata)
         #     temp hack
         return qdata['cat_title']
+
 
 def tokenize_me(input_text):
     soup = BeautifulSoup(input_text)
     text = soup.get_text()
     tokens = nltk.word_tokenize(text.lower())
-    tokens = [i for i in tokens if ( i not in punctuation)]
+    tokens = [i for i in tokens if (i not in punctuation)]
     tokens = set([morph.parse(t)[0].normal_form for t in tokens if t not in stop_words])
     return tokens
 
-def update_tag(tag_text,category_id,question_id):
+
+def update_tag(tag_text, category_id, question_id, date):
     try:
         tag = Tag.objects.get(text=tag_text)
         #tag.questions.add(Question.objects.get(id=question_id))
-        tag.questions_count = F('questions_count') + 1
+        if tag.questions_count is None:
+            tag.questions_count = 1
+        else:
+            tag.questions_count = F('questions_count') + 1
+        if tag.created_at > date:
+            tag.created_at = date
         tag.save()
     except Tag.DoesNotExist:
-        tag = Tag(id=category_id, text=tag_text,questions_count = 1)
+        tag = Tag(id=category_id, text=tag_text, questions_count=1, created_at=date)
         #tag.questions.add(Question.objects.get(id=question_id))
         tag.save()
     return tag
@@ -126,28 +133,38 @@ def update_category(category_title,category_id,question_id):
         category.save()
     return category
 
-def update_global_counter(tag_id,category_id):
-    counter, created = GlobalCounter.objects.get_or_create(tag_id=tag_id,category_id=category_id,defaults={'count':1,'local_idf':0})
+
+def update_global_counter(tag_id, category_id):
+    counter, created = GlobalCounter.objects.get_or_create(tag_id=tag_id, category_id=category_id, defaults={'count': 1, 'local_idf': 0})
     if not created:
         counter.count = F('count')+1
         counter.save()
     return counter
 
+
 def update_local_idf():
     total_questions = Question.objects.all().count()
-    global_counters =GlobalCounter.objects.all()
+    global_counters = GlobalCounter.objects.all()
     for cnt in global_counters:
-        cnt.local_idf=math.log10(total_questions/cnt.count)
+        # fixme
+        if cnt.count is None:
+            continue
+        cnt.local_idf = math.log10(total_questions/cnt.count)
         cnt.save()
     return
 
+
 def update_global_idf():
     total_questions = Question.objects.all().count()
-    tags =Tag.objects.all()
+    tags = Tag.objects.all()
     for tag in tags:
-        tag.global_idf=math.log10(total_questions/tag.questions_count)
+        # fixme
+        if tag.questions_count is None:
+            continue
+        tag.global_idf = math.log10(total_questions/tag.questions_count)
         tag.save()
     return
+
 
 def update_and_show_status(report, current_status):
     for k, v in current_status.iteritems():

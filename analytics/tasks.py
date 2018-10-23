@@ -25,19 +25,18 @@ def import_new():
     with memcache_lock(lock_id, "import_new") as acquired:
         if acquired:
             start_id = 211100000
-            #start_id = Question.objects.latest('id').id - 1
+            try:
+                start_id = Question.objects.latest('id').id - 1
+            except Exception as e:
+                pass
             pages = 1000
-            report = {}
-            result = []
             print("starting new API import from id {}".format(start_id))
             try:
-                for i in range(pages + 1):
+                for i in range(pages):
                     start_id += 1
-                    current_status = {}
                     try:
                         data = get_api(start_id)
                     except Exception as e:
-                        #                     start_id += page_size
                         print(e)
                         continue
                     if len(data) == 0:
@@ -45,10 +44,7 @@ def import_new():
                         break
                     parsed = parse_question(data)
                     save_question(parsed)
-                    result.append(parsed)
-                    start_id = int(data['id'])
-                    print("***** PROGRESS *****\npage: {}".format(i + 1))
-                    report = update_and_show_status(report, current_status)
+                    print("loaded page: {}".format(i + 1))
                 update_global_idf()
                 update_local_idf()
             except Exception as e:

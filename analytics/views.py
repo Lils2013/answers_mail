@@ -156,9 +156,7 @@ def tags(request, page=1, page_size=50):
     if request.method == 'GET':
         paginator = Paginator(tags, page_size)
         serializer = QuestionSerializer(paginator.page(page), many=True)
-        responce = Response(serializer.data)
-        print 'serialized'
-        return responce
+        return Response(serializer.data)
 
 
 def import_from_dump(request):
