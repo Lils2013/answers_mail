@@ -19,13 +19,13 @@ def test(arg):
 def import_new():
     # все импорты моделей нужны именно здесь, внутри функции
     from analytics.models import Question, Category
-    from .utils import parse_question, update_and_show_status, save_question, get_api
+    from .utils import parse_question, update_and_show_status, save_question, get_api, update_global_idf, update_local_idf
 
     lock_id = '{0}-lock'.format("import_new")
     with memcache_lock(lock_id, "import_new") as acquired:
         if acquired:
-            start_id = Question.objects.latest('id').id - 1
-
+            start_id = 211100000
+            #start_id = Question.objects.latest('id').id - 1
             pages = 1000
             report = {}
             result = []
@@ -49,6 +49,8 @@ def import_new():
                     start_id = int(data['id'])
                     print("***** PROGRESS *****\npage: {}".format(i + 1))
                     report = update_and_show_status(report, current_status)
+                update_global_idf()
+                update_local_idf()
             except Exception as e:
                 print(e)
             return

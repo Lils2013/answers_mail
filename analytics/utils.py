@@ -4,8 +4,27 @@ import pytz
 import requests
 from django.db.models import F
 
-from analytics.models import Question, Category, Tag, Counter
+import math
+
+import nltk
+from nltk.stem.snowball import SnowballStemmer
+import pymorphy2
+from nltk.corpus import brown
+from nltk.util import ngrams
+from bs4 import BeautifulSoup
+import string
+
+
+from analytics.models import Question, Category, Tag, Counter, GlobalCounter
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+
+morph = pymorphy2.MorphAnalyzer()
+stemmer = SnowballStemmer("russian")
+stop_words= nltk.corpus.stopwords.words('russian')
+# '' for python 2.7 only
+stop_words.extend(['хочу','1','2','3','4','5','6','7','8','9','0','нужно','вопрос','какие','подскажите','делать','спасибо','как','помогите','пожалуйста','очень','почему','что', 'это', 'так', 'вот', 'быть', 'как', 'в', '—', 'к', 'на','`','``','.','...','..',u"''"])
+stop_words=set(stop_words)
+punctuation = set(string.punctuation)
 
 
 def get_api_page(page_from, page_size):
@@ -64,29 +83,71 @@ def save_question(qdata):
     except Question.DoesNotExist:
         question = Question(text=qdata['text'], created_at=qdata['date'], id=qdata['id'], rating=qdata['rating'])
         question.save()
-        try:
-            category = Category.objects.get(id=qdata['cat_id'])
-            category.questions.add(Question.objects.get(id=question.id))
-            category.save()
-        except Category.DoesNotExist:
-            category = Category(id=qdata['cat_id'], name=qdata['cat_title'])
-            category.save()
-            category.questions.add(Question.objects.get(id=question.id))
-            category.save()
-        #     temp hack
-        try:
-            tag = Tag.objects.get(id=qdata['cat_id'])
-            tag.questions.add(Question.objects.get(id=question.id))
-            tag.save()
-        except Tag.DoesNotExist:
-            tag = Tag(id=qdata['cat_id'], text=qdata['cat_title'])
-            tag.save()
-            tag.questions.add(Question.objects.get(id=question.id))
-            tag.save()
+        tokens = tokenize_me(qdata['text'])
+        category =  update_category(qdata['cat_title'], qdata['cat_id'], question.id)
+        for token in tokens:
+            tag = update_tag(tag_text = token,category_id = category.id,question_id = question.id)
+            update_global_counter(tag_id = tag.id,category_id = category.id)
         update_counter(qdata)
         #     temp hack
         return qdata['cat_title']
 
+def tokenize_me(input_text):
+    soup = BeautifulSoup(input_text)
+    text = soup.get_text()
+    tokens = nltk.word_tokenize(text.lower())
+    tokens = [i for i in tokens if ( i not in punctuation)]
+    tokens = set([morph.parse(t)[0].normal_form for t in tokens if t not in stop_words])
+    return tokens
+
+def update_tag(tag_text,category_id,question_id):
+    try:
+        tag = Tag.objects.get(text=tag_text)
+        #tag.questions.add(Question.objects.get(id=question_id))
+        tag.questions_count = F('questions_count') + 1
+        tag.save()
+    except Tag.DoesNotExist:
+        tag = Tag(id=category_id, text=tag_text,questions_count = 1)
+        #tag.questions.add(Question.objects.get(id=question_id))
+        tag.save()
+    return tag
+
+def update_category(category_title,category_id,question_id):
+    try:
+        category = Category.objects.get(id=category_id)
+        category.questions.add(Question.objects.get(id=question_id))
+        category.questions_count = F('questions_count') + 1
+        category.save()
+    except Category.DoesNotExist:
+        category = Category(id=category_id, name=category_title)
+        category.save()
+        category.questions.add(Question.objects.get(id=question_id))
+        category.questions_count = 1
+        category.save()
+    return category
+
+def update_global_counter(tag_id,category_id):
+    counter, created = GlobalCounter.objects.get_or_create(tag_id=tag_id,category_id=category_id,defaults={'count':1,'local_idf':0})
+    if not created:
+        counter.count = F('count')+1
+        counter.save()
+    return counter
+
+def update_local_idf():
+    total_questions = Question.objects.all().count()
+    global_counters =GlobalCounter.objects.all()
+    for cnt in global_counters:
+        cnt.local_idf=math.log10(total_questions/cnt.count)
+        cnt.save()
+    return
+
+def update_global_idf():
+    total_questions = Question.objects.all().count()
+    tags =Tag.objects.all()
+    for tag in tags:
+        tag.global_idf=math.log10(total_questions/tag.questions_count)
+        tag.save()
+    return
 
 def update_and_show_status(report, current_status):
     for k, v in current_status.iteritems():
@@ -99,7 +160,7 @@ def update_and_show_status(report, current_status):
     text = ''
     for i in range(length):
         text += "{}: {}\n".format(sorted_by_value[i][1], sorted_by_value[i][0])
-    print(text)
+        text += "{}: {}\n".format(sorted_by_value[i][1], sorted_by_value[i][0])
     return report
 
 
