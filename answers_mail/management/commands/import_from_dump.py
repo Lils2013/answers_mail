@@ -1,13 +1,10 @@
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import pytz
-from django.core.management.base import BaseCommand, CommandError
-from django.db.models import F
+from django.core.management.base import BaseCommand
 
 # Create your views here.
-from analytics.models import Category, Counter
-from analytics.models import Question, Tag
 from analytics.utils import save_question
 
 

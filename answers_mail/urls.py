@@ -15,11 +15,10 @@ Including another URLconf
 """
 from django.conf.urls import include, url
 from django.contrib import admin
+from django.views.generic import TemplateView
 
 from analytics import views
 from .routers import router
-from django.views.generic import TemplateView
-from analytics.views import import_from_api_view, import_from_dump
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
