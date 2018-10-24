@@ -61,19 +61,20 @@ def parse_question(data):
     return dict(id=qid, text=question_text, date=date_floor, cat_title=cat_title, cat_id=cat_id, rating=rating)
 
 
-def update_counter(qdata):
-    counter = Counter.objects.all().filter(category=Category.objects.get(id=qdata['cat_id']), tag=Tag.objects.get(id=qdata['cat_id']),
-                                           datetime=qdata['date'].replace(minute=0, second=0)
-                                                    + timedelta(hours=1))
-    if not counter:
-        counter = Counter(category=Category.objects.get(id=qdata['cat_id']), tag=Tag.objects.get(id=qdata['cat_id']),
-                                           datetime=qdata['date'].replace(minute=0, second=0)
-                                                    + timedelta(hours=1), count=1)
-        counter.save()
-    else:
-        counter = counter[0]
-        counter.count = F('count') + 1
-        counter.save()
+def update_counter(qdata, tags):
+    for tag in tags:
+        counter = Counter.objects.all().filter(category=Category.objects.get(id=qdata['cat_id']), tag=tag,
+                                               datetime=qdata['date'].replace(minute=0, second=0)
+                                                        + timedelta(hours=1))
+        if not counter:
+            counter = Counter(category=Category.objects.get(id=qdata['cat_id']), tag=tag,
+                                               datetime=qdata['date'].replace(minute=0, second=0)
+                                                        + timedelta(hours=1), count=1)
+            counter.save()
+        else:
+            counter = counter[0]
+            counter.count = F('count') + 1
+            counter.save()
 
 
 def save_question(qdata):
@@ -85,16 +86,18 @@ def save_question(qdata):
         question.save()
         tokens = tokenize_me(qdata['text'])
         category = update_category(qdata['cat_title'], qdata['cat_id'], question.id)
+        tags=[]
         for token in tokens:
             tag = update_tag(tag_text=token, category_id=category.id, question_id=question.id, date=qdata['date'])
+            tags.append(tag)
             update_global_counter(tag_id=tag.id, category_id=category.id)
-        update_counter(qdata)
+        update_counter(qdata, tags)
         #     temp hack
         return qdata['cat_title']
 
 
 def tokenize_me(input_text):
-    soup = BeautifulSoup(input_text)
+    soup = BeautifulSoup(input_text, features="html.parser")
     text = soup.get_text()
     tokens = nltk.word_tokenize(text.lower())
     tokens = [i for i in tokens if (i not in punctuation)]
@@ -105,7 +108,8 @@ def tokenize_me(input_text):
 def update_tag(tag_text, category_id, question_id, date):
     try:
         tag = Tag.objects.get(text=tag_text)
-        #tag.questions.add(Question.objects.get(id=question_id))
+        tag.save()
+        tag.questions.add(Question.objects.get(id=question_id))
         if tag.questions_count is None:
             tag.questions_count = 1
         else:
@@ -114,10 +118,12 @@ def update_tag(tag_text, category_id, question_id, date):
             tag.created_at = date
         tag.save()
     except Tag.DoesNotExist:
-        tag = Tag(id=category_id, text=tag_text, questions_count=1, created_at=date)
-        #tag.questions.add(Question.objects.get(id=question_id))
+        tag = Tag(text=tag_text, questions_count=1, created_at=date)
+        tag.save()
+        tag.questions.add(Question.objects.get(id=question_id))
         tag.save()
     return tag
+
 
 def update_category(category_title,category_id,question_id):
     try:

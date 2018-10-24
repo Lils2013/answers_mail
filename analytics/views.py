@@ -92,7 +92,7 @@ def graph(request):
             end_date = end_date.astimezone(timezone)
             start_date = end_date - timedelta(days=1)
             for i in range(24 * 1):
-                date_iter_start = start_date.replace(minute=0, second=0) + timedelta(hours=i)
+                date_iter_start = start_date.replace(minute=0, second=0, microsecond=0) + timedelta(hours=i)
                 date_iter_end = date_iter_start + timedelta(hours=1)
                 counters = Counter.objects.all().filter(datetime=date_iter_end, tag_id=pk)
                 if counters:
@@ -105,7 +105,7 @@ def graph(request):
             end_date = end_date.astimezone(timezone)
             start_date = end_date - timedelta(days=7)
             for i in range(6 * 7):
-                date_iter_start = start_date.replace(minute=0, second=0) + timedelta(hours=4 * i)
+                date_iter_start = start_date.replace(minute=0, second=0, microsecond=0) + timedelta(hours=4 * i)
                 date_iter_end = date_iter_start + timedelta(hours=4)
                 counters = Counter.objects.all().filter(datetime__in=(
                     date_iter_end, date_iter_end - timedelta(hours=1), date_iter_end - timedelta(hours=2),
@@ -120,7 +120,7 @@ def graph(request):
             end_date = end_date.astimezone(timezone)
             start_date = end_date - timedelta(days=30)
             for i in range(30):
-                date_iter_start = start_date.replace(minute=0, second=0) + timedelta(hours=24 * i)
+                date_iter_start = start_date.replace(minute=0, second=0, microsecond=0) + timedelta(hours=24 * i)
                 date_iter_end = date_iter_start + timedelta(hours=24)
                 counters = Counter.objects.all().filter(
                     datetime__range=(date_iter_start + timedelta(hours=1), date_iter_end), tag_id=pk)
@@ -148,7 +148,7 @@ def tags(request, page=1, page_size=50):
     """
     try:
         tags = sorted(Tag.objects.all(),
-                      key=lambda i: i.counters.aggregate(num_of_questions=Sum('count'))['num_of_questions'],
+                      key=lambda i: i.questions_count,
                       reverse=True)
     except Tag.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
@@ -157,72 +157,3 @@ def tags(request, page=1, page_size=50):
         paginator = Paginator(tags, page_size)
         serializer = QuestionSerializer(paginator.page(page), many=True)
         return Response(serializer.data)
-
-
-def import_from_dump(request):
-    with open("otvet-queastions-2018-2.txt") as tsvfile:
-        for line in tsvfile:
-            line_data = re.split('\t', line)
-            question_text = line_data[9].rstrip().lstrip()
-            if (len(line_data) == 11):
-                question_text += ' '.encode('utf-8') + line_data[10].rstrip().lstrip()
-            try:
-                question = Question.objects.get(id=int(line_data[0]))
-                return 'already exists'
-            except Question.DoesNotExist:
-                created_at = datetime.strptime(line_data[1], "%Y-%m-%d %H:%M:%S")
-                timezone = pytz.timezone("Europe/Moscow")
-                created_at = timezone.localize(created_at)
-                question = Question(text=question_text, rating=int(line_data[2]), created_at=created_at,
-                                    id=int(line_data[0]))
-                question.save()
-                try:
-                    tag = Tag.objects.get(id=int(line_data[5]))
-                    tag.questions.add(Question.objects.get(id=question.id))
-                    tag.save()
-                except Tag.DoesNotExist:
-                    tag = Tag(id=int(line_data[5]), text=line_data[6])
-                    tag.save()
-                    tag.questions.add(Question.objects.get(id=question.id))
-                    tag.save()
-                # try:
-                #     tag = Tag.objects.get(id=int(line_data[7]))
-                #     tag.questions.add(Question.objects.get(id=question.id))
-                #     tag.save()
-                # except Tag.DoesNotExist:
-                #     tag = Tag(id=int(line_data[7]), text=line_data[8])
-                #     tag.save()
-                #     tag.questions.add(Question.objects.get(id=question.id))
-                #     tag.save()
-                try:
-                    category = Category.objects.get(id=int(line_data[5]))
-                    category.questions.add(Question.objects.get(id=question.id))
-                    category.save()
-                except Category.DoesNotExist:
-                    category = Category(id=int(line_data[5]), name=line_data[6])
-                    category.save()
-                    category.questions.add(Question.objects.get(id=question.id))
-                    category.save()
-                # try:
-                #     category = Category.objects.get(id=int(line_data[7]))
-                #     category.questions_parent.add(Question.objects.get(id=question.id))
-                #     category.save()
-                # except Category.DoesNotExist:
-                #     category = Category(id=int(line_data[7]), name=line_data[8])
-                #     category.save()
-                #     category.questions_parent.add(Question.objects.get(id=question.id))
-                #     category.save()
-                # try:
-                counter = Counter.objects.all().filter(category=category, tag=tag,
-                                                       datetime=created_at.replace(minute=0, second=0)
-                                                                + timedelta(hours=1))
-                if not counter:
-                    counter = Counter(category=category, tag=tag,
-                                      datetime=created_at.replace(minute=0, second=0) + timedelta(hours=1), count=1)
-                    counter.save()
-                else:
-                    counter = counter[0]
-                    counter.count = F('count') + 1
-                    counter.save()
-
-    return HttpResponse("<html><body><h4>Lol</h4></body></html>")

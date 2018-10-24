@@ -24,12 +24,13 @@ def import_new():
     lock_id = '{0}-lock'.format("import_new")
     with memcache_lock(lock_id, "import_new") as acquired:
         if acquired:
-            start_id = 211100000
+            # start_id = 211130000
             try:
                 start_id = Question.objects.latest('id').id - 1
             except Exception as e:
+                start_id = 200000000
                 pass
-            pages = 1000
+            pages = 200
             print("starting new API import from id {}".format(start_id))
             try:
                 for i in range(pages):
