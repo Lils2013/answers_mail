@@ -4,5 +4,5 @@ venv
 *.pyc
 .DS_Store
 *.txt
-celerybeat-schedule.db
-dump.rdb
+*.db
+*.rdb

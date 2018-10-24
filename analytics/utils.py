@@ -61,12 +61,12 @@ def parse_question(data):
     return dict(id=qid, text=question_text, date=date_floor, cat_title=cat_title, cat_id=cat_id, rating=rating)
 
 
-def update_counter(qdata):
-    counter = Counter.objects.all().filter(category=Category.objects.get(id=qdata['cat_id']), tag=Tag.objects.get(id=qdata['cat_id']),
+def update_counter(qdata, tag):
+    counter = Counter.objects.all().filter(category=Category.objects.get(id=qdata['cat_id']), tag=tag,
                                            datetime=qdata['date'].replace(minute=0, second=0)
                                                     + timedelta(hours=1))
     if not counter:
-        counter = Counter(category=Category.objects.get(id=qdata['cat_id']), tag=Tag.objects.get(id=qdata['cat_id']),
+        counter = Counter(category=Category.objects.get(id=qdata['cat_id']), tag=tag,
                                            datetime=qdata['date'].replace(minute=0, second=0)
                                                     + timedelta(hours=1), count=1)
         counter.save()
@@ -88,7 +88,7 @@ def save_question(qdata):
         for token in tokens:
             tag = update_tag(tag_text=token, category_id=category.id, question_id=question.id, date=qdata['date'])
             update_global_counter(tag_id=tag.id, category_id=category.id)
-        update_counter(qdata)
+            update_counter(qdata, tag)
         #     temp hack
         return qdata['cat_title']
 
