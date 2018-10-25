@@ -68,11 +68,11 @@
                         <h2>Time Trend</h2>
                         <div class="loading" v-if="loadingGraph===true">Loading&#8230;</div>
                         <line-chart v-if="loadingGraph===false" :points="false" :data="chartData"></line-chart>
-                        <button class="btn btn-info" v-on:click="getGraphForMultipleTags('now 1-d')">Last Day</button>
-                        <button class="btn btn-info" v-on:click="getGraphForMultipleTags('now 7-d')">Last Week</button>
-                        <button class="btn btn-info" v-on:click="getGraphForMultipleTags('now 1-m')">Last Month</button>
+                        <button class="btn btn-info" v-on:click="updateRange('now 1-d')">Last Day</button>
+                        <button class="btn btn-info" v-on:click="updateRange('now 7-d')">Last Week</button>
+                        <button class="btn btn-info" v-on:click="updateRange('now 1-m')">Last Month</button>
                         {#                        <button class="btn btn-info" v-on:click="getAllTime()">All Time</button>#}
-                        <button class="btn btn-info" v-on:click="getGraphForMultipleTags('now 1-y')">Last Year</button>
+                        <button class="btn btn-info" v-on:click="updateRange('now 1-y')">Last Year</button>
                         <button class="btn btn-info" v-on:click="showSelectCustomRange()">Custom range</button>
                         <br/>
                         <br/>
@@ -255,6 +255,11 @@
                 this.currentTagsIdsOnChart = [this.currentTag];
                 this.selectedCategoryForGraph = this.selectedCategory;
                 $("#tagDetailsModal").modal('show');
+                this.period = 'now 1-d';
+                this.getQuestions('now 1-d');
+                this.getGraphForMultipleTags('now 1-d');
+            },
+            getQuestions: function () {
                 this.$http.get(`/questions/`, {
                     params: {
                         tagid: this.currentTag,
@@ -269,31 +274,10 @@
                         this.loadingQuestions = false;
                         console.log(err);
                     });
-                this.getGraphForMultipleTags('now 1-d');
             },
-            getGraph: function (period) {
+            getGraphForMultipleTags: function () {
                 this.loadingGraph = true;
-                this.period = period;
-                this.$http.get(`/graph/`, {
-                    params: {
-                        tagid: this.currentTag,
-                        date: this.period,
-                        catid: this.selectedCategoryForGraph
-                    }
-                })
-                    .then((response) => {
-                        this.chartData = response.data;
-                        this.loadingGraph = false;
-                        this.currentTagsIdsOnChart = [this.currentTag];
-                    })
-                    .catch((err) => {
-                        this.loadingGraph = false;
-                        console.log(err);
-                    })
-            },
-            getGraphForMultipleTags: function (period) {
-                this.loadingGraph = true;
-                this.period = period;
+
                 this.$http.get(`/graph/`, {
                     params: {
                         tags: this.currentTagsIdsOnChart,
@@ -321,7 +305,7 @@
                 this.loadingGraph = true;
                 $("#customRangeModal").modal('hide');
                 this.period = this.selectedDates.start.toISOString() + " " + this.selectedDates.end.toISOString();
-                this.getGraphForMultipleTags(this.period);
+                this.getGraphForMultipleTags();
             },
             toQuestion: function (id) {
                 return "https://otvet.mail.ru/question/" + id;
@@ -335,7 +319,7 @@
                     this.currentTagsIdsOnChart.push(id);
                 }
                 $("#tagCompareModal").modal('hide');
-                this.getGraphForMultipleTags(this.period);
+                this.getGraphForMultipleTags();
             },
             onCategoryChange: function () {
                 if (this.selectedCategory == null) {
@@ -345,8 +329,14 @@
                 }
             },
             onCategoryChangeForGraph: function () {
-                this.getGraphForMultipleTags(this.period);
+                this.getGraphForMultipleTags();
+                this.getQuestions();
             },
+            updateRange: function (period) {
+                this.period = period;
+                this.getGraphForMultipleTags();
+                this.getQuestions();
+            }
         }
 
     });
