@@ -32,7 +32,7 @@ class Question(models.Model):
 class Tag(models.Model):
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=False)
-    questions = models.ManyToManyField(Question)
+    questions = models.ManyToManyField(Question, related_name='tags')
     questions_count = models.IntegerField(default=None, blank=True, null=True)
     global_idf = models.FloatField(default=None, blank=True, null=True)
 

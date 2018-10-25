@@ -4,13 +4,14 @@ from __future__ import unicode_literals
 from datetime import datetime, timedelta
 import pytz
 from django.db.models import F, Sum
+from django.db import connection
 from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 # Create your views here.
-from analytics.api.serializers import QuestionSerializer
+from analytics.api.serializers import QuestionSerializer, TagSerializer, CategorySerializer
 from analytics.models import Category, Counter
 from analytics.models import Question, Tag
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
@@ -58,6 +59,41 @@ def tag_detail(request, pk, page=1, page_size=50):
 
 
 @api_view(['GET'])
+def get_questions(request, page_size=50):
+    tagid = request.GET.get('tagid', None)
+    if tagid is None:
+        return Response({'status': 500, 'error': 'no tagid'})
+    try:
+        tagid = int(tagid)
+    except ValueError:
+        return Response({'status': 500, 'error': 'incorrect tagid'})
+    # timezone = pytz.timezone("Europe/Moscow")
+    # time_interval = request.GET.get('date', None)
+    # if time_interval is None:
+    #     return Response({'status': 500, 'error': 'no date'})
+    category_id = request.GET.get('catid', None)
+    if category_id == 'null':
+        category_id = None
+    try:
+        if category_id is not None:
+            category_id = int(category_id)
+    except ValueError:
+        return Response({'status': 500, 'error': 'incorrect catid'})
+    try:
+        # Question.objects.all().filter(category_id=category_id, tags__id=tagid)
+        questions = Question.objects.all().filter(tags__id=tagid)
+        if category_id is not None:
+            questions = questions.filter(category_id=category_id)
+    except Tag.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        # paginator = Paginator(questions, page_size)
+        serializer = QuestionSerializer(questions[:page_size], many=True)
+        return Response(serializer.data)
+
+
+@api_view(['GET'])
 def graph(request):
     pk = request.GET.get('tagid', None)
     if pk is None:
@@ -68,6 +104,16 @@ def graph(request):
         return Response({'status': 500, 'error': 'incorrect tagid'})
     timezone = pytz.timezone("Europe/Moscow")
     time_interval = request.GET.get('date', None)
+    if time_interval is None:
+        return Response({'status': 500, 'error': 'no date'})
+    category_id = request.GET.get('catid', None)
+    if category_id == 'null':
+        category_id = None
+    try:
+        if category_id is not None:
+            category_id = int(category_id)
+    except ValueError:
+        return Response({'status': 500, 'error': 'incorrect catid'})
     data = {}
     try:
         start_date, end_date = time_interval.split(" ")
@@ -81,6 +127,8 @@ def graph(request):
             date_iter_end = date_iter_start + timedelta(hours=24)
             counters = Counter.objects.all().filter(
                 datetime__range=(date_iter_start + timedelta(hours=1), date_iter_end), tag_id=pk)
+            if (category_id is not None):
+                counters = counters.filter(category_id=category_id)
             if counters:
                 data[date_iter_start.isoformat()] = counters.aggregate(num_of_questions=Sum('count'))[
                     'num_of_questions']
@@ -95,6 +143,8 @@ def graph(request):
                 date_iter_start = start_date.replace(minute=0, second=0, microsecond=0) + timedelta(hours=i)
                 date_iter_end = date_iter_start + timedelta(hours=1)
                 counters = Counter.objects.all().filter(datetime=date_iter_end, tag_id=pk)
+                if (category_id is not None):
+                    counters = counters.filter(category_id=category_id)
                 if counters:
                     data[date_iter_start.isoformat()] = counters.aggregate(num_of_questions=Sum('count'))[
                         'num_of_questions']
@@ -110,6 +160,8 @@ def graph(request):
                 counters = Counter.objects.all().filter(datetime__in=(
                     date_iter_end, date_iter_end - timedelta(hours=1), date_iter_end - timedelta(hours=2),
                     date_iter_end - timedelta(hours=3)), tag_id=pk)
+                if (category_id is not None):
+                    counters = counters.filter(category_id=category_id)
                 if counters:
                     data[date_iter_start.isoformat()] = counters.aggregate(num_of_questions=Sum('count'))[
                         'num_of_questions']
@@ -124,13 +176,34 @@ def graph(request):
                 date_iter_end = date_iter_start + timedelta(hours=24)
                 counters = Counter.objects.all().filter(
                     datetime__range=(date_iter_start + timedelta(hours=1), date_iter_end), tag_id=pk)
+                if (category_id is not None):
+                    counters = counters.filter(category_id=category_id)
+                if counters:
+                    data[date_iter_start.isoformat()] = counters.aggregate(num_of_questions=Sum('count'))[
+                        'num_of_questions']
+                else:
+                    data[date_iter_start.isoformat()] = 0
+        elif time_interval == 'now 1-y':
+            end_date = datetime.now(pytz.utc)
+            end_date = end_date.astimezone(timezone)
+            start_date = end_date - timedelta(days=365)
+            for i in range(365):
+                date_iter_start = start_date.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(hours=24 * i)
+                date_iter_end = date_iter_start + timedelta(hours=24)
+                counters = Counter.objects.all().filter(
+                    datetime__range=(date_iter_start + timedelta(hours=1), date_iter_end), tag_id=pk)
+                if (category_id is not None):
+                    counters = counters.filter(category_id=category_id)
                 if counters:
                     data[date_iter_start.isoformat()] = counters.aggregate(num_of_questions=Sum('count'))[
                         'num_of_questions']
                 else:
                     data[date_iter_start.isoformat()] = 0
         else:
-            for counter in Counter.objects.all().filter(tag_id=pk):
+            counters = Counter.objects.all().filter(tag_id=pk)
+            if (category_id is not None):
+                counters = counters.filter(category_id=category_id)
+            for counter in counters:
                 date_with_tz = (counter.datetime.astimezone(timezone) - timedelta(hours=1)).replace(hour=0, minute=0,
                                                                                                     second=0).isoformat()
                 if not data.has_key(date_with_tz):
@@ -143,17 +216,53 @@ def graph(request):
 
 @api_view(['GET'])
 def tags(request, page=1, page_size=50):
-    """
-    Retrieve, update or delete a code snippet.
-    """
     try:
-        tags = sorted(Tag.objects.all(),
-                      key=lambda i: i.questions_count,
-                      reverse=True)
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
+                           "INNER JOIN analytics_tag at ON ac.tag_id = at.id "
+                           "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50")
+            rows = dictfetchall(cursor)
     except Tag.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        paginator = Paginator(tags, page_size)
-        serializer = QuestionSerializer(paginator.page(page), many=True)
+        return Response(rows)
+
+
+@api_view(['GET'])
+def tags_with_category(request, pk):
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
+                           "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.category_id = %s "
+                           "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50",[pk])
+            rows = dictfetchall(cursor)
+    except Tag.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        return Response(rows)
+
+
+@api_view(['GET'])
+def categories(request, page=1, page_size=50):
+    try:
+        categories = sorted(Category.objects.all(),
+                      key=lambda i: i.questions_count,
+                      reverse=True)
+    except Category.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        # paginator = Paginator(categories, page_size)
+        serializer = CategorySerializer(categories, many=True)
         return Response(serializer.data)
+
+
+def dictfetchall(cursor):
+    "Return all rows from a cursor as a dict"
+    columns = [col[0] for col in cursor.description]
+    return [
+        dict(zip(columns, row))
+        for row in cursor.fetchall()
+    ]

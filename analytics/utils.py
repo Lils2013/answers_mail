@@ -108,7 +108,6 @@ def tokenize_me(input_text):
 def update_tag(tag_text, category_id, question_id, date):
     try:
         tag = Tag.objects.get(text=tag_text)
-        tag.save()
         tag.questions.add(Question.objects.get(id=question_id))
         if tag.questions_count is None:
             tag.questions_count = 1
