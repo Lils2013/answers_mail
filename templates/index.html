@@ -68,18 +68,19 @@
                         <h2>Time Trend</h2>
                         <div class="loading" v-if="loadingGraph===true">Loading&#8230;</div>
                         <line-chart v-if="loadingGraph===false" :points="false" :data="chartData"></line-chart>
-                        <button class="btn btn-info" v-on:click="getDay()">Last Day</button>
-                        <button class="btn btn-info" v-on:click="getWeek()">Last Week</button>
-                        <button class="btn btn-info" v-on:click="getMonth()">Last Month</button>
+                        <button class="btn btn-info" v-on:click="getGraphForMultipleTags('now 1-d')">Last Day</button>
+                        <button class="btn btn-info" v-on:click="getGraphForMultipleTags('now 7-d')">Last Week</button>
+                        <button class="btn btn-info" v-on:click="getGraphForMultipleTags('now 1-m')">Last Month</button>
                         {#                        <button class="btn btn-info" v-on:click="getAllTime()">All Time</button>#}
-                        <button class="btn btn-info" v-on:click="getLastYear()">Last Year</button>
+                        <button class="btn btn-info" v-on:click="getGraphForMultipleTags('now 1-y')">Last Year</button>
                         <button class="btn btn-info" v-on:click="showSelectCustomRange()">Custom range</button>
                         <br/>
                         <br/>
                         <button class="btn btn-info" v-on:click="compare()">Compare</button>
                         <br/>
                         <br/>
-                        <select v-model="selectedCategoryForGraph">
+                        <h2>For category: </h2>
+                        <select v-model="selectedCategoryForGraph" @change="onCategoryChangeForGraph()">
                             <option v-for="option in options" v-bind:value="option.value">
                                 ${ option.text }
                             </option>
@@ -250,9 +251,16 @@
             getTag: function (id) {
                 this.loadingGraph = true;
                 this.loadingQuestions = true;
+                this.currentTag = id;
+                this.currentTagsIdsOnChart = [this.currentTag];
                 this.selectedCategoryForGraph = this.selectedCategory;
                 $("#tagDetailsModal").modal('show');
-                this.$http.get(`/questions/?tagid=${id}&catid=${this.selectedCategoryForGraph}`)
+                this.$http.get(`/questions/`, {
+                    params: {
+                        tagid: this.currentTag,
+                        catid: this.selectedCategoryForGraph
+                    }
+                })
                     .then((response) => {
                         this.questions = response.data;
                         this.loadingQuestions = false;
@@ -261,12 +269,21 @@
                         this.loadingQuestions = false;
                         console.log(err);
                     });
-                this.$http.get(`/graph/?tagid=${id}&date=now 1-d&catid=${this.selectedCategoryForGraph}`)
+                this.getGraphForMultipleTags('now 1-d');
+            },
+            getGraph: function (period) {
+                this.loadingGraph = true;
+                this.period = period;
+                this.$http.get(`/graph/`, {
+                    params: {
+                        tagid: this.currentTag,
+                        date: this.period,
+                        catid: this.selectedCategoryForGraph
+                    }
+                })
                     .then((response) => {
                         this.chartData = response.data;
                         this.loadingGraph = false;
-                        this.currentTag = id;
-                        this.period = 'now 1-d';
                         this.currentTagsIdsOnChart = [this.currentTag];
                     })
                     .catch((err) => {
@@ -274,70 +291,19 @@
                         console.log(err);
                     })
             },
-            getDay: function () {
+            getGraphForMultipleTags: function (period) {
                 this.loadingGraph = true;
-                this.$http.get(`/graph/?tagid=${this.currentTag}&date=now 1-d&catid=${this.selectedCategoryForGraph}`)
+                this.period = period;
+                this.$http.get(`/graph/`, {
+                    params: {
+                        tags: this.currentTagsIdsOnChart,
+                        date: this.period,
+                        catid: this.selectedCategoryForGraph
+                    }
+                })
                     .then((response) => {
                         this.chartData = response.data;
                         this.loadingGraph = false;
-                        this.period = 'now 1-d';
-                        this.currentTagsIdsOnChart = [this.currentTag];
-                    })
-                    .catch((err) => {
-                        this.loadingGraph = false;
-                        console.log(err);
-                    })
-            },
-            getWeek: function () {
-                this.loadingGraph = true;
-                this.$http.get(`/graph/?tagid=${this.currentTag}&date=now 7-d&catid=${this.selectedCategoryForGraph}`)
-                    .then((response) => {
-                        this.chartData = response.data;
-                        this.loadingGraph = false;
-                        this.period = 'now 7-d';
-                        this.currentTagsIdsOnChart = [this.currentTag];
-                    })
-                    .catch((err) => {
-                        this.loadingGraph = false;
-                        console.log(err);
-                    })
-            },
-            getMonth: function () {
-                this.loadingGraph = true;
-                this.$http.get(`/graph/?tagid=${this.currentTag}&date=now 1-m&catid=${this.selectedCategoryForGraph}`)
-                    .then((response) => {
-                        this.chartData = response.data;
-                        this.loadingGraph = false;
-                        this.period = 'now 1-m';
-                        this.currentTagsIdsOnChart = [this.currentTag];
-                    })
-                    .catch((err) => {
-                        this.loadingGraph = false;
-                        console.log(err);
-                    })
-            },
-            getLastYear: function () {
-                this.loadingGraph = true;
-                this.$http.get(`/graph/?tagid=${this.currentTag}&date=now 1-y&catid=${this.selectedCategoryForGraph}`)
-                    .then((response) => {
-                        this.chartData = response.data;
-                        this.loadingGraph = false;
-                        this.period = 'now 1-y';
-                        this.currentTagsIdsOnChart = [this.currentTag];
-                    })
-                    .catch((err) => {
-                        this.loadingGraph = false;
-                        console.log(err);
-                    })
-            },
-            getAllTime: function () {
-                this.loadingGraph = true;
-                this.$http.get(`/graph/?tagid=${this.currentTag}&date=all&catid=${this.selectedCategoryForGraph}`)
-                    .then((response) => {
-                        this.chartData = response.data;
-                        this.loadingGraph = false;
-                        this.period = 'all';
-                        this.currentTagsIdsOnChart = [this.currentTag];
                     })
                     .catch((err) => {
                         this.loadingGraph = false;
@@ -355,18 +321,7 @@
                 this.loadingGraph = true;
                 $("#customRangeModal").modal('hide');
                 this.period = this.selectedDates.start.toISOString() + " " + this.selectedDates.end.toISOString();
-                this.$http.get(`/graph/?tagid=${this.currentTag}&date=${this.period}&catid=${this.selectedCategoryForGraph}`)
-                    .then((response) => {
-                        this.chartData = response.data;
-                        this.loadingGraph = false;
-                        {#this.period = 'all';#}
-                        this.currentTagsIdsOnChart = [this.currentTag];
-                    })
-                    .catch((err) => {
-                        this.loadingGraph = false;
-                        console.log(err);
-                    })
-
+                this.getGraphForMultipleTags(this.period);
             },
             toQuestion: function (id) {
                 return "https://otvet.mail.ru/question/" + id;
@@ -376,19 +331,11 @@
             },
             addToGraph: function (id) {
                 this.loadingGraph = true;
-                this.$http.get(`/graph/?tagid=${id}&date=${this.period}&catid=${this.selectedCategoryForGraph}`)
-                    .then((response) => {
-                        this.chartData.push(response.data[0]);
-                        this.loadingGraph = false;
-                        $("#tagCompareModal").modal('hide');
-                        if (this.currentTagsIdsOnChart.indexOf(id) === -1) {
-                            this.currentTagsIdsOnChart.push(id);
-                        }
-                    })
-                    .catch((err) => {
-                        this.loadingGraph = false;
-                        console.log(err);
-                    })
+                if (this.currentTagsIdsOnChart.indexOf(id) === -1) {
+                    this.currentTagsIdsOnChart.push(id);
+                }
+                $("#tagCompareModal").modal('hide');
+                this.getGraphForMultipleTags(this.period);
             },
             onCategoryChange: function () {
                 if (this.selectedCategory == null) {
@@ -396,6 +343,9 @@
                 } else {
                     this.getTagsWithCategory(this.selectedCategory);
                 }
+            },
+            onCategoryChangeForGraph: function () {
+                this.getGraphForMultipleTags(this.period);
             },
         }
 

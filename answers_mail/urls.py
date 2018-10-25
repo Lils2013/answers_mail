@@ -34,5 +34,5 @@ urlpatterns = [
     url(r'^tags/(?P<pk>[0-9]+)$', views.tags_with_category),
     url(r'^categories/$', views.categories),
     # url(r'^graph/(?P<pk>[0-9]+)/(?P<time_interval>[\-0-9a-zA-Z]+)$', views.graph),
-    url(r'^graph/$', views.graph),
+    url(r'^graph/$', views.graphs),
 ]
