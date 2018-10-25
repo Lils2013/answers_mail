@@ -28,9 +28,9 @@ def import_new():
             try:
                 start_id = Question.objects.latest('id').id - 1
             except Exception as e:
-                start_id = 200000000
+                start_id = 211150000
                 pass
-            pages = 200
+            pages = 5000
             print("starting new API import from id {}".format(start_id))
             try:
                 for i in range(pages):

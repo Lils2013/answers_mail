@@ -101,7 +101,16 @@ def tokenize_me(input_text):
     text = soup.get_text()
     tokens = nltk.word_tokenize(text.lower())
     tokens = [i for i in tokens if (i not in punctuation)]
-    tokens = set([morph.parse(t)[0].normal_form for t in tokens if t not in stop_words])
+    tokens = [t for t in tokens if t not in stop_words]
+    normalized_tokens = []
+    for t in tokens:
+        new_token = morph.parse(t)[0]
+        if new_token.tag.POS is None:
+            if str(new_token.tag) in ['UNKN', 'LATN']:
+                normalized_tokens.append(new_token.normal_form)
+        elif new_token.tag.POS in ['NOUN', 'VERB', 'INFN']:
+            normalized_tokens.append(new_token.normal_form)
+    tokens = set(normalized_tokens)
     return tokens
 
 
