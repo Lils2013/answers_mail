@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
-from analytics.models import Tag, Question
+from analytics.models import Tag, Question, Category
 
 
 class TagSerializer(ModelSerializer):
@@ -10,7 +10,7 @@ class TagSerializer(ModelSerializer):
 
     class Meta:
         model = Tag
-        fields = '__all__'
+        fields = ('id', 'text', 'questions_count')
         read_only_fields = ('id', 'text')
 
 
@@ -22,6 +22,16 @@ class QuestionSerializer(ModelSerializer):
         model = Question
         fields = '__all__'
         read_only_fields = ('id', 'text')
+
+
+class CategorySerializer(ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = Category
+        fields = '__all__'
+        read_only_fields = ('id', 'name')
 
 
 class GraphSerializer(serializers.Serializer):
