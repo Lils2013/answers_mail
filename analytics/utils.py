@@ -14,16 +14,18 @@ from nltk.util import ngrams
 from bs4 import BeautifulSoup
 import string
 
-
 from analytics.models import Question, Category, Tag, Counter, GlobalCounter
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 
 morph = pymorphy2.MorphAnalyzer()
 stemmer = SnowballStemmer("russian")
-stop_words= nltk.corpus.stopwords.words('russian')
+stop_words = nltk.corpus.stopwords.words('russian')
 # '' for python 2.7 only
-stop_words.extend(['хочу','1','2','3','4','5','6','7','8','9','0','нужно','вопрос','какие','подскажите','делать','спасибо','как','помогите','пожалуйста','очень','почему','что', 'это', 'так', 'вот', 'быть', 'как', 'в', '—', 'к', 'на','`','``','.','...','..',u"''"])
-stop_words=set(stop_words)
+stop_words.extend(
+    ['хочу', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'нужно', 'вопрос', 'какие', 'подскажите', 'делать',
+     'спасибо', 'как', 'помогите', 'пожалуйста', 'очень', 'почему', 'что', 'это', 'так', 'вот', 'быть', 'как', 'в', '—',
+     'к', 'на', '`', '``', '.', '...', '..', u"''"])
+stop_words = set(stop_words)
 punctuation = set(string.punctuation)
 
 
@@ -68,8 +70,8 @@ def update_counter(qdata, tags):
                                                         + timedelta(hours=1))
         if not counter:
             counter = Counter(category=Category.objects.get(id=qdata['cat_id']), tag=tag,
-                                               datetime=qdata['date'].replace(minute=0, second=0)
-                                                        + timedelta(hours=1), count=1)
+                              datetime=qdata['date'].replace(minute=0, second=0)
+                                       + timedelta(hours=1), count=1)
             counter.save()
         else:
             counter = counter[0]
@@ -82,11 +84,12 @@ def save_question(qdata):
         question = Question.objects.get(id=qdata['id'])
         return 'already exists'
     except Question.DoesNotExist:
-        question = Question(text=qdata['text'], created_at=qdata['date'], id=qdata['id'], rating=qdata['rating'])
+        question = Question(text=qdata['text'].replace("\n", " "), created_at=qdata['date'], id=qdata['id'],
+                            rating=qdata['rating'])
         question.save()
         tokens = tokenize_me(qdata['text'])
         category = update_category(qdata['cat_title'], qdata['cat_id'], question.id)
-        tags=[]
+        tags = []
         for token in tokens:
             tag = update_tag(tag_text=token, category_id=category.id, question_id=question.id, date=qdata['date'])
             tags.append(tag)
@@ -133,7 +136,7 @@ def update_tag(tag_text, category_id, question_id, date):
     return tag
 
 
-def update_category(category_title,category_id,question_id):
+def update_category(category_title, category_id, question_id):
     try:
         category = Category.objects.get(id=category_id)
         category.questions.add(Question.objects.get(id=question_id))
@@ -149,9 +152,10 @@ def update_category(category_title,category_id,question_id):
 
 
 def update_global_counter(tag_id, category_id):
-    counter, created = GlobalCounter.objects.get_or_create(tag_id=tag_id, category_id=category_id, defaults={'count': 1, 'local_idf': 0})
+    counter, created = GlobalCounter.objects.get_or_create(tag_id=tag_id, category_id=category_id,
+                                                           defaults={'count': 1, 'local_idf': 0})
     if not created:
-        counter.count = F('count')+1
+        counter.count = F('count') + 1
         counter.save()
     return counter
 
@@ -163,7 +167,7 @@ def update_local_idf():
         # fixme
         if cnt.count is None:
             continue
-        cnt.local_idf = math.log10(total_questions/cnt.count)
+        cnt.local_idf = math.log10(total_questions / cnt.count)
         cnt.save()
     return
 
@@ -175,7 +179,7 @@ def update_global_idf():
         # fixme
         if tag.questions_count is None:
             continue
-        tag.global_idf = math.log10(total_questions/tag.questions_count)
+        tag.global_idf = math.log10(total_questions / tag.questions_count)
         tag.save()
     return
 
@@ -201,7 +205,7 @@ def import_from_api(page_from, amount):
     last_page_size = amount % page_size
     html = '{}'
     report = {}
-    print("importing from api {} pages".format(pages+1))
+    print("importing from api {} pages".format(pages + 1))
     try:
         if pages != 0:
             for i in range(pages + 1):
@@ -236,6 +240,5 @@ def import_from_api(page_from, amount):
         for (k, v) in sorted_by_value:
             html = html.format('{}  -  [{}] <br/> {}'.format(v, k, "{}"))
     return html
-
 
 # 210800000-88111

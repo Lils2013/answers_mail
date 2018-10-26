@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from datetime import datetime, timedelta
 import pytz
-from django.db.models import F, Sum
+from django.db.models import F, Sum, Count
 from django.db import connection
 from django.http import HttpResponse
 from rest_framework import status
@@ -60,13 +60,20 @@ def tag_detail(request, pk, page=1, page_size=50):
 
 @api_view(['GET'])
 def get_questions(request, page_size=50):
-    tagid = request.GET.get('tagid', None)
-    if tagid is None:
-        return Response({'status': 500, 'error': 'no tagid'})
+    tags = request.GET.getlist('tags[]', None)
+    if tags is None:
+        return Response({'status': 500, 'error': 'no tags'})
     try:
-        tagid = int(tagid)
+        tags = map(int, tags)
     except ValueError:
-        return Response({'status': 500, 'error': 'incorrect tagid'})
+        return Response({'status': 500, 'error': 'incorrect tags'})
+    # tagid = request.GET.get('tagid', None)
+    # if tagid is None:
+    #     return Response({'status': 500, 'error': 'no tagid'})
+    # try:
+    #     tagid = int(tagid)
+    # except ValueError:
+    #     return Response({'status': 500, 'error': 'incorrect tagid'})
     # timezone = pytz.timezone("Europe/Moscow")
     # time_interval = request.GET.get('date', None)
     # if time_interval is None:
@@ -81,7 +88,7 @@ def get_questions(request, page_size=50):
         return Response({'status': 500, 'error': 'incorrect catid'})
     try:
         # Question.objects.all().filter(category_id=category_id, tags__id=tagid)
-        questions = Question.objects.all().filter(tags__id=tagid)
+        questions = Question.objects.all().filter(tags__in=tags).annotate(num_tags=Count('tags')).filter(num_tags=len(tags))
         if category_id is not None:
             questions = questions.filter(category_id=category_id)
     except Tag.DoesNotExist:

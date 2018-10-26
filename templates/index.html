@@ -260,9 +260,10 @@
                 this.getGraphForMultipleTags('now 1-d');
             },
             getQuestions: function () {
+                this.loadingQuestions = true;
                 this.$http.get(`/questions/`, {
                     params: {
-                        tagid: this.currentTag,
+                        tags: this.currentTagsIdsOnChart,
                         catid: this.selectedCategoryForGraph
                     }
                 })
@@ -320,6 +321,7 @@
                 }
                 $("#tagCompareModal").modal('hide');
                 this.getGraphForMultipleTags();
+                this.getQuestions();
             },
             onCategoryChange: function () {
                 if (this.selectedCategory == null) {
