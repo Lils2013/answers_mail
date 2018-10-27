@@ -37,7 +37,13 @@
         <table class="table flextable" v-if="loading===false">
             <thead>
             <tr>
-                <th width="20%" scope="col">Number of qs</th>
+                <th width="20%" scope="col">
+                    <select v-model="selectedSortType" @change="onCategoryChange()">
+                        <option v-for="option in sortTypes" v-bind:value="option.value">
+                        ${ option.text }
+                        </option>
+                    </select>
+                    </th>
                 <th width="60%" scope="col">Tag</th>
                 <th width="20%" scope="col">Action</th>
             </tr>
@@ -206,15 +212,20 @@
                 {value: null, text: 'All'},
             ],
             categories: [],
+            selectedSortType: 'qcount',
+            sortTypes: [
+                {value: 'qcount', text: 'Number of qs'},
+                {value: 'idf_global', text: 'Global IDF'},
+            ],
         },
         mounted: function () {
             this.getCategories();
-            this.getTags();
+            this.getTags(this.selectedSortType);
         },
         methods: {
-            getTags: function () {
+            getTags: function (sortType) {
                 this.loading = true;
-                this.$http.get('/tags/')
+                this.$http.get(`/tags/${sortType}`)
                     .then((response) => {
                         this.tags = response.data;
                         this.loading = false;
@@ -236,9 +247,9 @@
                         console.log(err);
                     })
             },
-            getTagsWithCategory: function (categoryId) {
+            getTagsWithCategory: function (categoryId, sortType) {
                 this.loading = true;
-                this.$http.get(`/tags/${categoryId}`)
+                this.$http.get(`/tags/${categoryId}/${sortType}`)
                     .then((response) => {
                         this.tags = response.data;
                         this.loading = false;
@@ -254,6 +265,7 @@
                 this.currentTag = id;
                 this.currentTagsIdsOnChart = [this.currentTag];
                 this.selectedCategoryForGraph = this.selectedCategory;
+                this.selectedSortType = 'qcount';
                 $("#tagDetailsModal").modal('show');
                 this.period = 'now 1-d';
                 this.getQuestions('now 1-d');
@@ -325,9 +337,24 @@
             },
             onCategoryChange: function () {
                 if (this.selectedCategory == null) {
-                    this.getTags();
+                    if (this.selectedSortType == 'idf_local') {
+                        this.selectedSortType = 'idf_global';
+                    }
+                    this.sortTypes = [
+                        {value: 'qcount', text: 'Number of qs'},
+                        {value: 'idf_global', text: 'Global IDF'},
+                        ];
+                    this.getTags(this.selectedSortType);
                 } else {
-                    this.getTagsWithCategory(this.selectedCategory);
+                    if (this.selectedSortType == 'idf_global') {
+                        this.selectedSortType = 'idf_local';
+                    }
+                    this.sortTypes = [
+                        {value: 'qcount', text: 'Number of qs'},
+                        {value: 'idf_local', text: 'Category IDF'},
+                    ];
+
+                    this.getTagsWithCategory(this.selectedCategory, this.selectedSortType);
                 }
             },
             onCategoryChangeForGraph: function () {

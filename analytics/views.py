@@ -239,12 +239,19 @@ def graphs(request):
 
 
 @api_view(['GET'])
-def tags(request, page=1, page_size=50):
+def tags(request, sort_type='qcount', page=1, page_size=50):
     try:
         with connection.cursor() as cursor:
-            cursor.execute("SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
-                           "INNER JOIN analytics_tag at ON ac.tag_id = at.id "
-                           "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50")
+            if sort_type == 'idf_global':
+                cursor.execute(
+                    "SELECT at.text as text, ac.tag_id as id, at.global_idf  AS questions_count FROM analytics_counter ac "
+                    "INNER JOIN analytics_tag at ON ac.tag_id = at.id "
+                    "GROUP BY ac.tag_id, at.text, at.global_idf ORDER BY at.global_idf  LIMIT 50 ")
+            else:
+                cursor.execute(
+                    "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
+                    "INNER JOIN analytics_tag at ON ac.tag_id = at.id "
+                    "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50")
             rows = dictfetchall(cursor)
     except Tag.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
@@ -254,12 +261,19 @@ def tags(request, page=1, page_size=50):
 
 
 @api_view(['GET'])
-def tags_with_category(request, pk):
+def tags_with_category(request, pk, sort_type='qcount'):
     try:
         with connection.cursor() as cursor:
-            cursor.execute("SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
-                           "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.category_id = %s "
-                           "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50",[pk])
+            if sort_type == 'idf_local':
+                cursor.execute(
+                    "SELECT at.text as text, gc.tag_id as id, gc.local_idf  AS questions_count FROM analytics_globalcounter gc "
+                    "INNER JOIN analytics_tag at ON gc.tag_id = at.id WHERE gc.category_id = %s "
+                    "GROUP BY gc.tag_id, at.text, gc.local_idf ORDER BY gc.local_idf  LIMIT 50", [pk])
+            else:
+                cursor.execute(
+                    "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
+                    "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.category_id = %s "
+                    "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50", [pk])
             rows = dictfetchall(cursor)
     except Tag.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
