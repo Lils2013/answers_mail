@@ -215,7 +215,7 @@
             selectedSortType: 'qcount',
             sortTypes: [
                 {value: 'qcount', text: 'Number of qs'},
-                {value: 'tfidf_global', text: 'Global TF-IDF'},
+                {value: 'idf_global', text: 'Global IDF'},
             ],
         },
         mounted: function () {
@@ -337,20 +337,21 @@
             },
             onCategoryChange: function () {
                 if (this.selectedCategory == null) {
-                    if (this.selectedSortType == 'tfidf_local' || this.selectedSortType ==  'tfidf_mix') {
-                        this.selectedSortType = 'tfidf_global';
+                    if (this.selectedSortType == 'idf_local') {
+                        this.selectedSortType = 'idf_global';
                     }
-                    this.getTags(this.selectedSortType);
                     this.sortTypes = [
                         {value: 'qcount', text: 'Number of qs'},
-                        {value: 'tfidf_global', text: 'Global TF-IDF'},
+                        {value: 'idf_global', text: 'Global IDF'},
                         ];
+                    this.getTags(this.selectedSortType);
                 } else {
+                    if (this.selectedSortType == 'idf_global') {
+                        this.selectedSortType = 'idf_local';
+                    }
                     this.sortTypes = [
                         {value: 'qcount', text: 'Number of qs'},
-                        {value: 'tfidf_global', text: 'Global TF-IDF'},
-                        {value: 'tfidf_local', text: 'Category TF-IDF'},
-                        {value: 'tfidf_mix', text: 'Mixed TF-IDF'},
+                        {value: 'idf_local', text: 'Category IDF'},
                     ];
 
                     this.getTagsWithCategory(this.selectedCategory, this.selectedSortType);
