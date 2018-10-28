@@ -87,7 +87,7 @@ def save_question(qdata):
         question = Question(text=qdata['text'].replace("\n", " "), created_at=qdata['date'], id=qdata['id'],
                             rating=qdata['rating'])
         question.save()
-        tokens = tokenize_me(qdata['text'])
+        tokens = tokenize_me(qdata['text'].replace("\n", " "))
         category = update_category(qdata['cat_title'], qdata['cat_id'], question.id)
         tags = []
         for token in tokens:

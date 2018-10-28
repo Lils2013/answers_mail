@@ -82,12 +82,12 @@
                         <h2>Time Trend</h2>
                         <div class="loading" v-if="loadingGraph===true">Loading&#8230;</div>
                         <line-chart v-if="loadingGraph===false" :points="false" :data="chartData"></line-chart>
-                        <button class="btn btn-info" v-on:click="updateRange('now 1-d')">Last Day</button>
-                        <button class="btn btn-info" v-on:click="updateRange('now 7-d')">Last Week</button>
-                        <button class="btn btn-info" v-on:click="updateRange('now 1-m')">Last Month</button>
+                        <button class="btn btn-info" v-on:click="updateRangeForGraph('now 1-d')">Last Day</button>
+                        <button class="btn btn-info" v-on:click="updateRangeForGraph('now 7-d')">Last Week</button>
+                        <button class="btn btn-info" v-on:click="updateRangeForGraph('now 1-m')">Last Month</button>
                         {#                        <button class="btn btn-info" v-on:click="getAllTime()">All Time</button>#}
-                        <button class="btn btn-info" v-on:click="updateRange('now 1-y')">Last Year</button>
-                        <button class="btn btn-info" v-on:click="showSelectCustomRange()">Custom range</button>
+                        <button class="btn btn-info" v-on:click="updateRangeForGraph('now 1-y')">Last Year</button>
+                        <button class="btn btn-info" v-on:click="showSelectCustomRangeForGraph()">Custom range</button>
                         <br/>
                         <br/>
                         <button class="btn btn-info" v-on:click="compare()">Compare</button>
@@ -144,6 +144,29 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="customRangeForGraphModal" tabindex="-1" role="dialog"
+             aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLongTitle">Custom Range</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <v-date-picker
+                                :drag-attribute='dateRangeAttributes'
+                                :select-attribute='dateRangeAttributes' mode='range'
+                                v-model='selectedDates'
+                                :is-inline='isInline'></v-date-picker>
+                        <button :disabled="selectedDates==null" class="btn btn-info"
+                                v-on:click="selectCustomRangeForGraph()">Select
+                        </button>
                     </div>
                 </div>
             </div>
@@ -224,17 +247,24 @@
             selectedSortType: 'qcount',
             sortTypes: [
                 {value: 'qcount', text: 'Number of qs'},
-                {value: 'idf_global', text: 'Global IDF'},
+                {value: 'idf', text: 'IDF'},
             ],
         },
         mounted: function () {
+            this.period = 'now 1-d';
             this.getCategories();
-            this.getTags(this.selectedSortType);
+            this.getTags();
         },
         methods: {
-            getTags: function (sortType) {
+            getTags: function () {
                 this.loading = true;
-                this.$http.get(`/tags/${sortType}`)
+                this.$http.get(`/tags/`, {
+                    params: {
+                        sortType: this.selectedSortType,
+                        date: this.period,
+                        catid: this.selectedCategoryForGraph
+                    }
+                })
                     .then((response) => {
                         this.tags = response.data;
                         this.loading = false;
@@ -256,18 +286,6 @@
                         console.log(err);
                     })
             },
-            getTagsWithCategory: function (categoryId, sortType) {
-                this.loading = true;
-                this.$http.get(`/tags/${categoryId}/${sortType}`)
-                    .then((response) => {
-                        this.tags = response.data;
-                        this.loading = false;
-                    })
-                    .catch((err) => {
-                        this.loading = false;
-                        console.log(err);
-                    })
-            },
             getTag: function (id) {
                 this.loadingGraph = true;
                 this.loadingQuestions = true;
@@ -277,15 +295,15 @@
                 this.selectedSortType = 'qcount';
                 $("#tagDetailsModal").modal('show');
                 this.periodForGraph = this.period;
-                this.getQuestions('now 1-d');
-                this.getGraphForMultipleTags('now 1-d');
+                this.getQuestions();
+                this.getGraphForMultipleTags();
             },
             getQuestions: function () {
                 this.loadingQuestions = true;
                 this.$http.get(`/questions/`, {
                     params: {
                         tags: this.currentTagsIdsOnChart,
-                        date: this.period,
+                        date: this.periodForGraph,
                         catid: this.selectedCategoryForGraph
                     }
                 })
@@ -300,7 +318,6 @@
             },
             getGraphForMultipleTags: function () {
                 this.loadingGraph = true;
-
                 this.$http.get(`/graph/`, {
                     params: {
                         tags: this.currentTagsIdsOnChart,
@@ -320,16 +337,26 @@
             compare: function () {
                 $("#tagCompareModal").modal('show');
             },
+            showSelectCustomRangeForGraph: function () {
+                $("#customRangeForGraphModal").modal('show');
+                this.selectedDates = null;
+            },
+            selectCustomRangeForGraph: function () {
+                this.loadingGraph = true;
+                $("#customRangeForGraphModal").modal('hide');
+                this.periodForRange = this.selectedDates.start.toISOString() + " " + this.selectedDates.end.toISOString();
+                this.getGraphForMultipleTags();
+                this.getQuestions();
+            },
             showSelectCustomRange: function () {
                 $("#customRangeModal").modal('show');
                 this.selectedDates = null;
             },
-            selectCustomRangeForGrapg: function () {
+            selectCustomRange: function () {
                 this.loadingGraph = true;
                 $("#customRangeModal").modal('hide');
-                this.periodForRange = this.selectedDates.start.toISOString() + " " + this.selectedDates.end.toISOString();
-                this.getGraphForMultipleTags();
-                this.getQuestions();
+                this.period = this.selectedDates.start.toISOString() + " " + this.selectedDates.end.toISOString();
+                this.getTags();
             },
             toQuestion: function (id) {
                 return "https://otvet.mail.ru/question/" + id;
@@ -347,26 +374,7 @@
                 this.getQuestions();
             },
             onCategoryChange: function () {
-                if (this.selectedCategory == null) {
-                    if (this.selectedSortType == 'idf_local') {
-                        this.selectedSortType = 'idf_global';
-                    }
-                    this.sortTypes = [
-                        {value: 'qcount', text: 'Number of qs'},
-                        {value: 'idf_global', text: 'Global IDF'},
-                    ];
-                    this.getTags(this.selectedSortType);
-                } else {
-                    if (this.selectedSortType == 'idf_global') {
-                        this.selectedSortType = 'idf_local';
-                    }
-                    this.sortTypes = [
-                        {value: 'qcount', text: 'Number of qs'},
-                        {value: 'idf_local', text: 'Category IDF'},
-                    ];
-
-                    this.getTagsWithCategory(this.selectedCategory, this.selectedSortType);
-                }
+                this.getTags();
             },
             onCategoryChangeForGraph: function () {
                 this.getGraphForMultipleTags();
@@ -376,6 +384,10 @@
                 this.periodForGraph = period;
                 this.getGraphForMultipleTags();
                 this.getQuestions();
+            },
+            updateRange: function (period) {
+                this.period = period;
+                this.getTags()
             }
         }
 

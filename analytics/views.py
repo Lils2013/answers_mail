@@ -114,7 +114,6 @@ def get_questions(request, page_size=50):
         return Response({'status': 500, 'error': 'incorrect catid'})
     try:
         # Question.objects.all().filter(category_id=category_id, tags__id=tagid)
-        print(time_interval)
         start_date, end_date = parse_date(time_interval)
         if start_date is None:
             questions = Question.objects.all().filter(tags__in=tags).annotate(num_tags=Count('tags')).filter(num_tags=len(tags)).order_by('-created_at')
@@ -272,22 +271,70 @@ def graphs(request):
 
 
 @api_view(['GET'])
-def tags(request, sort_type='qcount', page=1, page_size=50):
+def tags(request):
+    time_interval = request.GET.get('date', None)
+    if time_interval is None:
+        return Response({'status': 500, 'error': 'no date'})
+    category_id = request.GET.get('catid', None)
+    if category_id == '':
+        category_id = None
     try:
-        with connection.cursor() as cursor:
-            if sort_type == 'idf_global':
-                cursor.execute(
-                    "SELECT at.text as text, ac.tag_id as id, at.global_idf  AS questions_count FROM analytics_counter ac "
-                    "INNER JOIN analytics_tag at ON ac.tag_id = at.id "
-                    "GROUP BY ac.tag_id, at.text, at.global_idf ORDER BY at.global_idf  LIMIT 50 ")
+        if category_id is not None:
+            category_id = int(category_id)
+    except ValueError:
+        return Response({'status': 500, 'error': 'incorrect catid'})
+    sort_type = request.GET.get('sortType', None)
+    if sort_type not in ['idf', 'qcount']:
+        return Response({'status': 500, 'error': 'incorrect sort_type'})
+    start_date, end_date = parse_date(time_interval)
+    with connection.cursor() as cursor:
+        if start_date is None:
+            if category_id is None:
+                if sort_type == 'idf':
+                    cursor.execute(
+                        "SELECT at.text as text, ac.tag_id as id, at.global_idf  AS questions_count FROM analytics_counter ac "
+                        "INNER JOIN analytics_tag at ON ac.tag_id = at.id "
+                        "GROUP BY ac.tag_id, at.text, at.global_idf ORDER BY at.global_idf  LIMIT 50 ")
+                else:
+                    cursor.execute(
+                        "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
+                        "INNER JOIN analytics_tag at ON ac.tag_id = at.id "
+                        "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50")
             else:
-                cursor.execute(
-                    "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
-                    "INNER JOIN analytics_tag at ON ac.tag_id = at.id "
-                    "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50")
-            rows = dictfetchall(cursor)
-    except Tag.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+                if sort_type == 'idf':
+                    cursor.execute(
+                        "SELECT at.text as text, gc.tag_id as id, gc.local_idf  AS questions_count FROM analytics_globalcounter gc "
+                        "INNER JOIN analytics_tag at ON gc.tag_id = at.id WHERE gc.category_id = %s "
+                        "GROUP BY gc.tag_id, at.text, gc.local_idf ORDER BY gc.local_idf  LIMIT 50", [category_id])
+                else:
+                    cursor.execute(
+                        "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
+                        "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.category_id = %s "
+                        "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50", [category_id])
+        else:
+            if category_id is None:
+                if sort_type == 'idf':
+                    cursor.execute(
+                        "SELECT at.text as text, ac.tag_id as id, at.global_idf  AS questions_count FROM analytics_counter ac "
+                        "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.datetime > %s AND ac.datetime < %s "
+                        "GROUP BY ac.tag_id, at.text, at.global_idf ORDER BY at.global_idf  LIMIT 50 ", [start_date, end_date])
+                else:
+                    cursor.execute(
+                        "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
+                        "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.datetime > %s AND ac.datetime < %s "
+                        "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50", [start_date, end_date])
+            else:
+                if sort_type == 'idf':
+                    cursor.execute(
+                        "SELECT at.text as text, gc.tag_id as id, gc.local_idf  AS questions_count FROM analytics_globalcounter gc "
+                        "INNER JOIN analytics_tag at ON gc.tag_id = at.id WHERE gc.category_id = %s AND ac.datetime > %s AND ac.datetime < %s "
+                        "GROUP BY gc.tag_id, at.text, gc.local_idf ORDER BY gc.local_idf  LIMIT 50", [category_id, start_date, end_date])
+                else:
+                    cursor.execute(
+                        "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
+                        "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.category_id = %s AND ac.datetime > %s AND ac.datetime < %s "
+                        "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50", [category_id, start_date, end_date])
+        rows = dictfetchall(cursor)
 
     if request.method == 'GET':
         return Response(rows)
@@ -295,21 +342,18 @@ def tags(request, sort_type='qcount', page=1, page_size=50):
 
 @api_view(['GET'])
 def tags_with_category(request, pk, sort_type='qcount'):
-    try:
-        with connection.cursor() as cursor:
-            if sort_type == 'idf_local':
-                cursor.execute(
-                    "SELECT at.text as text, gc.tag_id as id, gc.local_idf  AS questions_count FROM analytics_globalcounter gc "
-                    "INNER JOIN analytics_tag at ON gc.tag_id = at.id WHERE gc.category_id = %s "
-                    "GROUP BY gc.tag_id, at.text, gc.local_idf ORDER BY gc.local_idf  LIMIT 50", [pk])
-            else:
-                cursor.execute(
-                    "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
-                    "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.category_id = %s "
-                    "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50", [pk])
-            rows = dictfetchall(cursor)
-    except Tag.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+    with connection.cursor() as cursor:
+        if sort_type == 'idf':
+            cursor.execute(
+                "SELECT at.text as text, gc.tag_id as id, gc.local_idf  AS questions_count FROM analytics_globalcounter gc "
+                "INNER JOIN analytics_tag at ON gc.tag_id = at.id WHERE gc.category_id = %s "
+                "GROUP BY gc.tag_id, at.text, gc.local_idf ORDER BY gc.local_idf  LIMIT 50", [pk])
+        else:
+            cursor.execute(
+                "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
+                "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.category_id = %s "
+                "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50", [pk])
+        rows = dictfetchall(cursor)
 
     if request.method == 'GET':
         return Response(rows)
