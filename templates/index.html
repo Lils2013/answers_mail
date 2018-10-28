@@ -34,16 +34,24 @@
                 </option>
             </select>
         </div>
+        <div class="row">
+            <h2>Time range: </h2>
+            <button class="btn btn-info" v-on:click="updateRange('now 1-d')">Last Day</button>
+            <button class="btn btn-info" v-on:click="updateRange('now 7-d')">Last Week</button>
+            <button class="btn btn-info" v-on:click="updateRange('now 1-m')">Last Month</button>
+            <button class="btn btn-info" v-on:click="updateRange('now 1-y')">Last Year</button>
+            <button class="btn btn-info" v-on:click="showSelectCustomRange()">Custom range</button>
+        </div>
         <table class="table flextable" v-if="loading===false">
             <thead>
             <tr>
                 <th width="20%" scope="col">
                     <select v-model="selectedSortType" @change="onCategoryChange()">
                         <option v-for="option in sortTypes" v-bind:value="option.value">
-                        ${ option.text }
+                            ${ option.text }
                         </option>
                     </select>
-                    </th>
+                </th>
                 <th width="60%" scope="col">Tag</th>
                 <th width="20%" scope="col">Action</th>
             </tr>
@@ -197,6 +205,7 @@
             chartData: [],
             questions: [],
             period: '',
+            periodForGraph: '',
             currentTagsIdsOnChart: [],
             selectedDates: null,
             datePickerModel: null,
@@ -267,7 +276,7 @@
                 this.selectedCategoryForGraph = this.selectedCategory;
                 this.selectedSortType = 'qcount';
                 $("#tagDetailsModal").modal('show');
-                this.period = 'now 1-d';
+                this.periodForGraph = this.period;
                 this.getQuestions('now 1-d');
                 this.getGraphForMultipleTags('now 1-d');
             },
@@ -294,7 +303,7 @@
                 this.$http.get(`/graph/`, {
                     params: {
                         tags: this.currentTagsIdsOnChart,
-                        date: this.period,
+                        date: this.periodForGraph,
                         catid: this.selectedCategoryForGraph
                     }
                 })
@@ -314,10 +323,10 @@
                 $("#customRangeModal").modal('show');
                 this.selectedDates = null;
             },
-            selectCustomRange: function () {
+            selectCustomRangeForGrapg: function () {
                 this.loadingGraph = true;
                 $("#customRangeModal").modal('hide');
-                this.period = this.selectedDates.start.toISOString() + " " + this.selectedDates.end.toISOString();
+                this.periodForRange = this.selectedDates.start.toISOString() + " " + this.selectedDates.end.toISOString();
                 this.getGraphForMultipleTags();
             },
             toQuestion: function (id) {
@@ -343,7 +352,7 @@
                     this.sortTypes = [
                         {value: 'qcount', text: 'Number of qs'},
                         {value: 'idf_global', text: 'Global IDF'},
-                        ];
+                    ];
                     this.getTags(this.selectedSortType);
                 } else {
                     if (this.selectedSortType == 'idf_global') {
@@ -361,8 +370,8 @@
                 this.getGraphForMultipleTags();
                 this.getQuestions();
             },
-            updateRange: function (period) {
-                this.period = period;
+            updateRangeForGraph: function (period) {
+                this.periodForGraph = period;
                 this.getGraphForMultipleTags();
                 this.getQuestions();
             }
