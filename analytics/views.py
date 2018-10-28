@@ -60,6 +60,7 @@ def tag_detail(request, pk, page=1, page_size=50):
 
 def parse_date(time_interval):
     timezone = pytz.timezone("Europe/Moscow")
+    days = 0
     try:
         start_date, end_date = time_interval.split(" ")
         # end_date = datetime.strptime(end_date, "%Y-%m-%dT%H:%M:%S")
@@ -67,22 +68,28 @@ def parse_date(time_interval):
         start_date = dateutil.parser.parse(start_date)
         end_date = end_date.astimezone(timezone)
         start_date = start_date.astimezone(timezone)
+        days = (end_date - start_date).days
         if start_date == end_date:
             end_date = end_date + timedelta(days=1)
+            days = 1
     except ValueError as er:
         end_date = datetime.now(pytz.utc)
         end_date = end_date.astimezone(timezone)
         if time_interval == 'now 1-d':
             start_date = end_date - timedelta(days=1)
+            days = 1
         elif time_interval == 'now 7-d':
             start_date = end_date - timedelta(days=7)
+            days = 7
         elif time_interval == 'now 1-m':
             start_date = end_date - timedelta(days=30)
+            days = 30
         elif time_interval == 'now 1-y':
             start_date = end_date - timedelta(days=365)
+            days = 365
         else:
             start_date = None
-    return start_date, end_date
+    return start_date, end_date, days
 
 
 @api_view(['GET'])
@@ -114,8 +121,7 @@ def get_questions(request, page_size=50):
         return Response({'status': 500, 'error': 'incorrect catid'})
     try:
         # Question.objects.all().filter(category_id=category_id, tags__id=tagid)
-        print(time_interval)
-        start_date, end_date = parse_date(time_interval)
+        start_date, end_date, _ = parse_date(time_interval)
         if start_date is None:
             questions = Question.objects.all().filter(tags__in=tags).annotate(num_tags=Count('tags')).filter(num_tags=len(tags)).order_by('-created_at')
         else:
@@ -140,7 +146,6 @@ def graphs(request):
         tags = map(int, tags)
     except ValueError:
         return Response({'status': 500, 'error': 'incorrect tags'})
-    timezone = pytz.timezone("Europe/Moscow")
     time_interval = request.GET.get('date', None)
     if time_interval is None:
         return Response({'status': 500, 'error': 'no date'})
@@ -152,122 +157,17 @@ def graphs(request):
             category_id = int(category_id)
     except ValueError:
         return Response({'status': 500, 'error': 'incorrect catid'})
-    data = []
-    try:
-        start_date, end_date = time_interval.split(" ")
-        # end_date = datetime.strptime(end_date, "%Y-%m-%dT%H:%M:%S")
-        end_date = dateutil.parser.parse(end_date)
-        start_date = dateutil.parser.parse(start_date)
-        end_date = end_date.astimezone(timezone)
-        start_date = start_date.astimezone(timezone)
-        if start_date == end_date:
-            end_date = end_date + timedelta(days=1)
-        for tag in tags:
-            data_for_tag = {}
-            for i in range((end_date - start_date).days + 1):
-                date_iter_start = start_date + timedelta(hours=24 * i)
-                date_iter_end = date_iter_start + timedelta(hours=24)
-                counters = Counter.objects.all().filter(
-                    datetime__range=(date_iter_start + timedelta(hours=1), date_iter_end), tag_id=tag)
-                if (category_id is not None):
-                    counters = counters.filter(category_id=category_id)
-                if counters:
-                    data_for_tag[date_iter_start.isoformat()] = counters.aggregate(num_of_questions=Sum('count'))[
-                        'num_of_questions']
-                else:
-                    data_for_tag[date_iter_start.isoformat()] = 0
-            data.append({'data': data_for_tag, 'name': Tag.objects.get(pk=tag).text})
-    except ValueError as er:
-        if time_interval == 'now 1-d':
-            end_date = datetime.now(pytz.utc)
-            end_date = end_date.astimezone(timezone)
-            start_date = end_date - timedelta(days=1)
-            for tag in tags:
-                data_for_tag = {}
-                for i in range(24 * 1):
-                    date_iter_start = start_date.replace(minute=0, second=0, microsecond=0) + timedelta(hours=i)
-                    date_iter_end = date_iter_start + timedelta(hours=1)
-                    counters = Counter.objects.all().filter(datetime=date_iter_end, tag_id=tag)
-                    if (category_id is not None):
-                        counters = counters.filter(category_id=category_id)
-                    if counters:
-                        data_for_tag[date_iter_start.isoformat()] = counters.aggregate(num_of_questions=Sum('count'))[
-                            'num_of_questions']
-                    else:
-                        data_for_tag[date_iter_start.isoformat()] = 0
-                data.append({'data': data_for_tag, 'name': Tag.objects.get(pk=tag).text})
-        elif time_interval == 'now 7-d':
-            end_date = datetime.now(pytz.utc)
-            end_date = end_date.astimezone(timezone)
-            start_date = end_date - timedelta(days=7)
-            for tag in tags:
-                data_for_tag = {}
-                for i in range(6 * 7):
-                    date_iter_start = start_date.replace(minute=0, second=0, microsecond=0) + timedelta(hours=4 * i)
-                    date_iter_end = date_iter_start + timedelta(hours=4)
-                    counters = Counter.objects.all().filter(datetime__in=(
-                        date_iter_end, date_iter_end - timedelta(hours=1), date_iter_end - timedelta(hours=2),
-                        date_iter_end - timedelta(hours=3)), tag_id=tag)
-                    if (category_id is not None):
-                        counters = counters.filter(category_id=category_id)
-                    if counters:
-                        data_for_tag[date_iter_start.isoformat()] = counters.aggregate(num_of_questions=Sum('count'))[
-                            'num_of_questions']
-                    else:
-                        data_for_tag[date_iter_start.isoformat()] = 0
-                data.append({'data': data_for_tag, 'name': Tag.objects.get(pk=tag).text})
-        elif time_interval == 'now 1-m':
-            end_date = datetime.now(pytz.utc)
-            end_date = end_date.astimezone(timezone)
-            start_date = end_date - timedelta(days=30)
-            for tag in tags:
-                data_for_tag = {}
-                for i in range(30):
-                    date_iter_start = start_date.replace(minute=0, second=0, microsecond=0) + timedelta(hours=24 * i)
-                    date_iter_end = date_iter_start + timedelta(hours=24)
-                    counters = Counter.objects.all().filter(
-                        datetime__range=(date_iter_start + timedelta(hours=1), date_iter_end), tag_id=tag)
-                    if (category_id is not None):
-                        counters = counters.filter(category_id=category_id)
-                    if counters:
-                        data_for_tag[date_iter_start.isoformat()] = counters.aggregate(num_of_questions=Sum('count'))[
-                            'num_of_questions']
-                    else:
-                        data_for_tag[date_iter_start.isoformat()] = 0
-                data.append({'data': data_for_tag, 'name': Tag.objects.get(pk=tag).text})
-        elif time_interval == 'now 1-y':
-            end_date = datetime.now(pytz.utc)
-            end_date = end_date.astimezone(timezone)
-            start_date = end_date - timedelta(days=365)
-            for tag in tags:
-                data_for_tag = {}
-                for i in range(365):
-                    date_iter_start = start_date.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(hours=24 * i)
-                    date_iter_end = date_iter_start + timedelta(hours=24)
-                    counters = Counter.objects.all().filter(
-                        datetime__range=(date_iter_start + timedelta(hours=1), date_iter_end), tag_id=tag)
-                    if (category_id is not None):
-                        counters = counters.filter(category_id=category_id)
-                    if counters:
-                        data_for_tag[date_iter_start.isoformat()] = counters.aggregate(num_of_questions=Sum('count'))[
-                            'num_of_questions']
-                    else:
-                        data_for_tag[date_iter_start.isoformat()] = 0
-                data.append({'data': data_for_tag, 'name': Tag.objects.get(pk=tag).text})
-        else:
-            for tag in tags:
-                data_for_tag = {}
-                counters = Counter.objects.all().filter(tag_id=tag)
-                if (category_id is not None):
-                    counters = counters.filter(category_id=category_id)
-                for counter in counters:
-                    date_with_tz = (counter.datetime.astimezone(timezone) - timedelta(hours=1)).replace(hour=0, minute=0,
-                                                                                                        second=0).isoformat()
-                    if not data_for_tag.has_key(date_with_tz):
-                        data_for_tag[date_with_tz] = counter.count
-                    else:
-                        data_for_tag[date_with_tz] = data_for_tag[date_with_tz] + counter.count
-                data.append({'data': data_for_tag, 'name': Tag.objects.get(pk=tag).text})
+
+    # points per days
+    ppd = {0: 0.1, 1: 24, 7: 6, 30: 1, 365: 0.2}
+
+    start_date, end_date, days = parse_date(time_interval)
+    if days is None or ppd.get(days) is None:
+        points_per_day = 0.1
+    else:
+        points_per_day = ppd[days]
+    data = get_last_graph_data(tags, days, points_per_day, category_id=category_id, start_date=start_date, end_date=end_date, only_existing_data=False)
+
     return Response(data)
 
 
@@ -337,3 +237,51 @@ def dictfetchall(cursor):
         dict(zip(columns, row))
         for row in cursor.fetchall()
     ]
+
+
+# if days = 0 it will return data for all time
+def get_last_graph_data(tags, days, points_per_day, category_id=None, start_date=None, end_date=None, only_existing_data=False):
+    timezone = pytz.timezone("Europe/Moscow")
+    if start_date is None or end_date is None:
+        end_date = datetime.now(pytz.utc)
+        end_date = end_date.astimezone(timezone)
+        start_date = end_date - timedelta(days=days)
+    if only_existing_data:
+        counters = Counter.objects.all().filter(tag_id=tags[0])
+        if category_id is not None:
+            counters = counters.filter(category_id=category_id)
+        end_date = counters.order_by('-datetime')[0].datetime
+        start_date = end_date - timedelta(days=days)
+        pass
+    delta_hours = 24 / points_per_day
+    print(timedelta(hours=delta_hours))
+    data = []
+    for tag in tags:
+        data_for_tag = {}
+        # data for all time
+        if days == 0:
+            counters = Counter.objects.all().filter(tag_id=tag)
+            if category_id is not None:
+                counters = counters.filter(category_id=category_id)
+            for counter in counters:
+                date_with_tz = (counter.datetime.astimezone(timezone) - timedelta(hours=1)).replace(hour=0, minute=0,
+                                                                                                    second=0).isoformat()
+                if not data_for_tag.has_key(date_with_tz):
+                    data_for_tag[date_with_tz] = counter.count
+                else:
+                    data_for_tag[date_with_tz] = data_for_tag[date_with_tz] + counter.count
+        else:
+            for i in range(int(days * points_per_day)):
+                date_iter_start = start_date.replace(minute=0, second=0, microsecond=0) + timedelta(hours=delta_hours * i)
+                date_iter_end = date_iter_start + timedelta(hours=delta_hours)
+                counters = Counter.objects.all().filter(
+                    datetime__range=(date_iter_start + timedelta(hours=1), date_iter_end), tag_id=tag)
+                if category_id is not None:
+                    counters = counters.filter(category_id=category_id)
+                if counters:
+                    data_for_tag[date_iter_start.isoformat()] = counters.aggregate(num_of_questions=Sum('count'))[
+                        'num_of_questions']
+                else:
+                    data_for_tag[date_iter_start.isoformat()] = 0
+        data.append({'data': data_for_tag, 'name': Tag.objects.get(pk=tag).text})
+    return data
