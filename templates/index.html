@@ -132,9 +132,6 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        {#                            <div class="search-wrapper">#}
-                        {#                                <input type="text" v-model="search" placeholder="Search tag.."/>#}
-                        {#                            </div>#}
                         <div class="wrapper">
                             <div v-for="tag in tags">
                                 <div class="card" v-if="currentTagsIdsOnChart.indexOf(tag.id) === -1">
@@ -344,7 +341,7 @@
             selectCustomRangeForGraph: function () {
                 this.loadingGraph = true;
                 $("#customRangeForGraphModal").modal('hide');
-                this.periodForRange = this.selectedDates.start.toISOString() + " " + this.selectedDates.end.toISOString();
+                this.periodForGraph = this.selectedDates.start.toISOString() + " " + this.selectedDates.end.toISOString();
                 this.getGraphForMultipleTags();
                 this.getQuestions();
             },

@@ -121,7 +121,7 @@ def get_questions(request, page_size=50):
         return Response({'status': 500, 'error': 'incorrect catid'})
     try:
         # Question.objects.all().filter(category_id=category_id, tags__id=tagid)
-        start_date, end_date = parse_date(time_interval)
+        start_date, end_date, _ = parse_date(time_interval)
         if start_date is None:
             questions = Question.objects.all().filter(tags__in=tags).annotate(num_tags=Count('tags')).filter(num_tags=len(tags)).order_by('-created_at')
         else:
@@ -163,7 +163,7 @@ def graphs(request):
 
     start_date, end_date, days = parse_date(time_interval)
     if days is None or ppd.get(days) is None:
-        points_per_day = 0.1
+        points_per_day = 1
     else:
         points_per_day = ppd[days]
     data = get_last_graph_data(tags, days, points_per_day, category_id=category_id, start_date=start_date, end_date=end_date, only_existing_data=False)
@@ -187,7 +187,7 @@ def tags(request):
     sort_type = request.GET.get('sortType', None)
     if sort_type not in ['idf', 'qcount']:
         return Response({'status': 500, 'error': 'incorrect sort_type'})
-    start_date, end_date = parse_date(time_interval)
+    start_date, end_date, _ = parse_date(time_interval)
     with connection.cursor() as cursor:
         if start_date is None:
             if category_id is None:
@@ -318,7 +318,9 @@ def get_last_graph_data(tags, days, points_per_day, category_id=None, start_date
         else:
             for i in range(int(days * points_per_day)):
                 date_iter_start = start_date.replace(minute=0, second=0, microsecond=0) + timedelta(hours=delta_hours * i)
+                print(date_iter_start)
                 date_iter_end = date_iter_start + timedelta(hours=delta_hours)
+                print(date_iter_end)
                 counters = Counter.objects.all().filter(
                     datetime__range=(date_iter_start + timedelta(hours=1), date_iter_end), tag_id=tag)
                 if category_id is not None:
@@ -329,4 +331,5 @@ def get_last_graph_data(tags, days, points_per_day, category_id=None, start_date
                 else:
                     data_for_tag[date_iter_start.isoformat()] = 0
         data.append({'data': data_for_tag, 'name': Tag.objects.get(pk=tag).text})
+    print(data)
     return data
