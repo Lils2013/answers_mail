@@ -58,6 +58,33 @@ def tag_detail(request, pk, page=1, page_size=50):
         return Response(serializer.data)
 
 
+def parse_date(time_interval):
+    timezone = pytz.timezone("Europe/Moscow")
+    try:
+        start_date, end_date = time_interval.split(" ")
+        # end_date = datetime.strptime(end_date, "%Y-%m-%dT%H:%M:%S")
+        end_date = dateutil.parser.parse(end_date)
+        start_date = dateutil.parser.parse(start_date)
+        end_date = end_date.astimezone(timezone)
+        start_date = start_date.astimezone(timezone)
+        if start_date == end_date:
+            end_date = end_date + timedelta(days=1)
+    except ValueError as er:
+        end_date = datetime.now(pytz.utc)
+        end_date = end_date.astimezone(timezone)
+        if time_interval == 'now 1-d':
+            start_date = end_date - timedelta(days=1)
+        elif time_interval == 'now 7-d':
+            start_date = end_date - timedelta(days=7)
+        elif time_interval == 'now 1-m':
+            start_date = end_date - timedelta(days=30)
+        elif time_interval == 'now 1-y':
+            start_date = end_date - timedelta(days=365)
+        else:
+            start_date = None
+    return start_date, end_date
+
+
 @api_view(['GET'])
 def get_questions(request, page_size=50):
     tags = request.GET.getlist('tags[]', None)
@@ -74,10 +101,9 @@ def get_questions(request, page_size=50):
     #     tagid = int(tagid)
     # except ValueError:
     #     return Response({'status': 500, 'error': 'incorrect tagid'})
-    # timezone = pytz.timezone("Europe/Moscow")
-    # time_interval = request.GET.get('date', None)
-    # if time_interval is None:
-    #     return Response({'status': 500, 'error': 'no date'})
+    time_interval = request.GET.get('date', None)
+    if time_interval is None:
+        return Response({'status': 500, 'error': 'no date'})
     category_id = request.GET.get('catid', None)
     if category_id == '':
         category_id = None
@@ -88,9 +114,14 @@ def get_questions(request, page_size=50):
         return Response({'status': 500, 'error': 'incorrect catid'})
     try:
         # Question.objects.all().filter(category_id=category_id, tags__id=tagid)
-        questions = Question.objects.all().filter(tags__in=tags).annotate(num_tags=Count('tags')).filter(num_tags=len(tags))
+        print(time_interval)
+        start_date, end_date = parse_date(time_interval)
+        if start_date is None:
+            questions = Question.objects.all().filter(tags__in=tags).annotate(num_tags=Count('tags')).filter(num_tags=len(tags)).order_by('-created_at')
+        else:
+            questions = Question.objects.all().filter(tags__in=tags, created_at__range=(start_date, end_date)).annotate(num_tags=Count('tags')).filter(num_tags=len(tags)).order_by('-created_at')
         if category_id is not None:
-            questions = questions.filter(category_id=category_id)
+            questions = questions.filter(category_id=category_id).order_by('-created_at')
     except Tag.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -129,6 +160,8 @@ def graphs(request):
         start_date = dateutil.parser.parse(start_date)
         end_date = end_date.astimezone(timezone)
         start_date = start_date.astimezone(timezone)
+        if start_date == end_date:
+            end_date = end_date + timedelta(days=1)
         for tag in tags:
             data_for_tag = {}
             for i in range((end_date - start_date).days + 1):
