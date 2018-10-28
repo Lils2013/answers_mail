@@ -276,6 +276,7 @@
                 this.$http.get(`/questions/`, {
                     params: {
                         tags: this.currentTagsIdsOnChart,
+                        date: this.period,
                         catid: this.selectedCategoryForGraph
                     }
                 })
@@ -319,6 +320,7 @@
                 $("#customRangeModal").modal('hide');
                 this.period = this.selectedDates.start.toISOString() + " " + this.selectedDates.end.toISOString();
                 this.getGraphForMultipleTags();
+                this.getQuestions();
             },
             toQuestion: function (id) {
                 return "https://otvet.mail.ru/question/" + id;
