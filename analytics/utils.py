@@ -25,7 +25,7 @@ stop_words = nltk.corpus.stopwords.words('russian')
 stop_words.extend(
     ['хочу', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'нужно', 'вопрос', 'какие', 'подскажите', 'делать',
      'спасибо', 'как', 'помогите', 'пожалуйста', 'очень', 'почему', 'что', 'это', 'так', 'вот', 'быть', 'как', 'в', '—',
-     'к', 'на', '`', '``', '.', '...', '..', u"''"])
+     'к', 'на', '`', '``', '.', '...', '..', "''"])
 stop_words = set(stop_words)
 punctuation = set(string.punctuation)
 
@@ -105,16 +105,17 @@ def tokenize_me(input_text):
     text = soup.get_text()
     tokens = nltk.word_tokenize(text.lower())
     tokens = [i for i in tokens if (i not in punctuation)]
-    tokens = [t.strip(string.punctuation) for t in tokens if t not in stop_words]
+    tokens = [t for t in tokens if t not in stop_words]
     normalized_tokens = []
     for t in tokens:
         t = t.strip(string.punctuation)
-        new_token = morph.parse(t)[0]
-        if new_token.tag.POS is None:
-            if str(new_token.tag) in ['UNKN', 'LATN']:
+        if len(t)>1:
+            new_token = morph.parse(t)[0]
+            if new_token.tag.POS is None:
+                if str(new_token.tag) in ['UNKN', 'LATN']:
+                    normalized_tokens.append(new_token.normal_form)
+            elif new_token.tag.POS in ['NOUN', 'VERB', 'INFN','ADJF','ADJS']:
                 normalized_tokens.append(new_token.normal_form)
-        elif new_token.tag.POS in ['NOUN', 'VERB', 'INFN','ADJF','ADJS']:
-            normalized_tokens.append(new_token.normal_form)
     tokens = set(normalized_tokens)
     bigrams = ngrams(tokens,2)
     for k1,k2 in cntr(bigrams):
