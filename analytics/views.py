@@ -195,7 +195,7 @@ def tags(request):
                     cursor.execute(
                         "SELECT at.text as text, ac.tag_id as id, at.global_idf  AS questions_count FROM analytics_counter ac "
                         "INNER JOIN analytics_tag at ON ac.tag_id = at.id "
-                        "GROUP BY ac.tag_id, at.text, at.global_idf ORDER BY at.global_idf  LIMIT 50 ")
+                        "GROUP BY ac.tag_id, at.text, at.global_idf ORDER BY at.global_idf DESC LIMIT 50 ")
                 else:
                     cursor.execute(
                         "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
@@ -206,7 +206,7 @@ def tags(request):
                     cursor.execute(
                         "SELECT at.text as text, gc.tag_id as id, gc.local_idf  AS questions_count FROM analytics_globalcounter gc "
                         "INNER JOIN analytics_tag at ON gc.tag_id = at.id WHERE gc.category_id = %s "
-                        "GROUP BY gc.tag_id, at.text, gc.local_idf ORDER BY gc.local_idf  LIMIT 50", [category_id])
+                        "GROUP BY gc.tag_id, at.text, gc.local_idf ORDER BY gc.local_idf DESC LIMIT 50", [category_id])
                 else:
                     cursor.execute(
                         "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
@@ -218,7 +218,7 @@ def tags(request):
                     cursor.execute(
                         "SELECT at.text as text, ac.tag_id as id, at.global_idf  AS questions_count FROM analytics_counter ac "
                         "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.datetime > %s AND ac.datetime < %s "
-                        "GROUP BY ac.tag_id, at.text, at.global_idf ORDER BY at.global_idf  LIMIT 50 ", [start_date, end_date])
+                        "GROUP BY ac.tag_id, at.text, at.global_idf ORDER BY at.global_idf DESC LIMIT 50 ", [start_date, end_date])
                 else:
                     cursor.execute(
                         "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
@@ -228,8 +228,8 @@ def tags(request):
                 if sort_type == 'idf':
                     cursor.execute(
                         "SELECT at.text as text, gc.tag_id as id, gc.local_idf  AS questions_count FROM analytics_globalcounter gc "
-                        "INNER JOIN analytics_tag at ON gc.tag_id = at.id WHERE gc.category_id = %s AND ac.datetime > %s AND ac.datetime < %s "
-                        "GROUP BY gc.tag_id, at.text, gc.local_idf ORDER BY gc.local_idf  LIMIT 50", [category_id, start_date, end_date])
+                        "INNER JOIN analytics_tag at ON gc.tag_id = at.id WHERE gc.category_id = %s"
+                        "GROUP BY gc.tag_id, at.text, gc.local_idf ORDER BY gc.local_idf DESC LIMIT 50", [category_id])
                 else:
                     cursor.execute(
                         "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
@@ -318,9 +318,7 @@ def get_last_graph_data(tags, days, points_per_day, category_id=None, start_date
         else:
             for i in range(int(days * points_per_day)):
                 date_iter_start = start_date.replace(minute=0, second=0, microsecond=0) + timedelta(hours=delta_hours * i)
-                print(date_iter_start)
                 date_iter_end = date_iter_start + timedelta(hours=delta_hours)
-                print(date_iter_end)
                 counters = Counter.objects.all().filter(
                     datetime__range=(date_iter_start + timedelta(hours=1), date_iter_end), tag_id=tag)
                 if category_id is not None:
@@ -331,5 +329,4 @@ def get_last_graph_data(tags, days, points_per_day, category_id=None, start_date
                 else:
                     data_for_tag[date_iter_start.isoformat()] = 0
         data.append({'data': data_for_tag, 'name': Tag.objects.get(pk=tag).text})
-    print(data)
     return data
