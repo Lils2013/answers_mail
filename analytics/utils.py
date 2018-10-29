@@ -13,6 +13,7 @@ from nltk.corpus import brown
 from nltk.util import ngrams
 from bs4 import BeautifulSoup
 import string
+from collections import Counter as cntr
 
 from analytics.models import Question, Category, Tag, Counter, GlobalCounter
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
@@ -107,13 +108,17 @@ def tokenize_me(input_text):
     tokens = [t.strip(string.punctuation) for t in tokens if t not in stop_words]
     normalized_tokens = []
     for t in tokens:
+        t = t.strip(string.punctuation)
         new_token = morph.parse(t)[0]
         if new_token.tag.POS is None:
             if str(new_token.tag) in ['UNKN', 'LATN']:
                 normalized_tokens.append(new_token.normal_form)
-        elif new_token.tag.POS in ['NOUN', 'VERB', 'INFN']:
+        elif new_token.tag.POS in ['NOUN', 'VERB', 'INFN','ADJF','ADJS']:
             normalized_tokens.append(new_token.normal_form)
     tokens = set(normalized_tokens)
+    bigrams = ngrams(tokens,2)
+    for k1,k2 in cntr(bigrams):
+        tokens.add(k1+" "+k2)
     return tokens
 
 
