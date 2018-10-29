@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <link rel='stylesheet' href='https://unpkg.com/v-calendar/lib/v-calendar.min.css'>
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <style>
         .modal {
             overflow: auto !important;
@@ -22,25 +23,34 @@
 <body>
 <div id="starting">
     <div class="container">
-        <div class="row">
-            <h1>List of Popular tags
-            </h1>
-        </div>
-        <div class="row">
-            <h2>Choose category: </h2>
-            <select v-model="selectedCategory" @change="onCategoryChange()">
-                <option v-for="option in options" v-bind:value="option.value">
-                    ${ option.text }
-                </option>
-            </select>
-        </div>
-        <div class="row">
-            <h2>Time range: </h2>
-            <button class="btn btn-info" v-on:click="updateRange('now 1-d')">Last Day</button>
-            <button class="btn btn-info" v-on:click="updateRange('now 7-d')">Last Week</button>
-            <button class="btn btn-info" v-on:click="updateRange('now 1-m')">Last Month</button>
-            <button class="btn btn-info" v-on:click="updateRange('now 1-y')">Last Year</button>
-            <button class="btn btn-info" v-on:click="showSelectCustomRange()">Custom range</button>
+        <h1>
+            <p class="text-center">Popular tags</p>
+        </h1>
+        <div class="btn-toolbar btn-group-justified" role="toolbar" aria-label="Toolbar with button groups">
+            <div class="btn-group mr-2" role="group" aria-label="First group">
+                 <select v-model="selectedCategory" @change="onCategoryChange()">
+                    <option v-for="option in options" v-bind:value="option.value">
+                        ${ option.text }
+                    </option>
+                </select>
+            </div>
+{#            <h2>Time range: </h2>#}
+            <div class="btn-group mr-2" role="group" aria-label="Second group">
+                <button type="button" class="btn btn-info" v-on:click="updateRange('now 1-d')">Last Day</button>
+                <button type="button" class="btn btn-info" v-on:click="updateRange('now 7-d')">Last Week</button>
+                <button type="button" class="btn btn-info" v-on:click="updateRange('now 1-m')">Last Month</button>
+                <button type="button" class="btn btn-info" v-on:click="updateRange('now 1-y')">Last Year</button>
+                <button type="button" class="btn btn-info" v-on:click="showSelectCustomRange()">Custom range</button>
+            </div>
+{#            search panel #}
+{#            <div class="input-group mr-3 " role="group" aria-label="Search group">#}
+{#                <input type="text" class="form-control" placeholder="Search for...">#}
+{#                <span class="input-group-btn">#}
+{#                    <button type="button" class="btn btn-info" >#}
+{#                        <span class="fa fa-search"></span>#}
+{#                    </button>#}
+{#                </span>#}
+{#            </div>#}
         </div>
         <table class="table flextable" v-if="loading===false">
             <thead>
@@ -238,7 +248,7 @@
             selectedCategory: null,
             selectedCategoryForGraph: null,
             options: [
-                {value: null, text: 'All'},
+                {value: null, text: 'Все категории'},
             ],
             categories: [],
             selectedSortType: 'qcount',
