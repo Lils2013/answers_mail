@@ -91,11 +91,16 @@ def save_question(qdata):
         tokens = tokenize_me(qdata['text'].replace("\n", " "))
         category = update_category(qdata['cat_title'], qdata['cat_id'], question.id)
         tags = []
+        start = datetime.now()
         for token in tokens:
             tag = update_tag(tag_text=token, category_id=category.id, question_id=question.id, date=qdata['date'])
             tags.append(tag)
             update_global_counter(tag_id=tag.id, category_id=category.id)
+        end1 = datetime.now()
+        print(end1 - start)
         update_counter(qdata, tags)
+        end2 = datetime.now()
+        print(end2 - end1)
         #     temp hack
         return qdata['cat_title']
 
