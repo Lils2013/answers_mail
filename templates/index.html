@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <link rel='stylesheet' href='https://unpkg.com/v-calendar/lib/v-calendar.min.css'>
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <style>
         .modal {
             overflow: auto !important;
@@ -22,22 +23,45 @@
 <body>
 <div id="starting">
     <div class="container">
-        <div class="row">
-            <h1>List of Popular tags
-            </h1>
-        </div>
-        <div class="row">
-            <h2>Choose category: </h2>
-            <select v-model="selectedCategory" @change="onCategoryChange()">
-                <option v-for="option in options" v-bind:value="option.value">
-                    ${ option.text }
-                </option>
-            </select>
+        <h1>
+            <p class="text-center">Popular tags</p>
+        </h1>
+        <div class="btn-toolbar btn-group-justified" role="toolbar" aria-label="Toolbar with button groups">
+            <div class="btn-group mr-2" role="group" aria-label="First group">
+                 <select v-model="selectedCategory" @change="onCategoryChange()">
+                    <option v-for="option in options" v-bind:value="option.value">
+                        ${ option.text }
+                    </option>
+                </select>
+            </div>
+{#            <h2>Time range: </h2>#}
+            <div class="btn-group mr-2" role="group" aria-label="Second group">
+                <button type="button" class="btn btn-info" v-on:click="updateRange('now 1-d')">Last Day</button>
+                <button type="button" class="btn btn-info" v-on:click="updateRange('now 7-d')">Last Week</button>
+                <button type="button" class="btn btn-info" v-on:click="updateRange('now 1-m')">Last Month</button>
+                <button type="button" class="btn btn-info" v-on:click="updateRange('now 1-y')">Last Year</button>
+                <button type="button" class="btn btn-info" v-on:click="showSelectCustomRange()">Custom range</button>
+            </div>
+{#            search panel #}
+{#            <div class="input-group mr-3 " role="group" aria-label="Search group">#}
+{#                <input type="text" class="form-control" placeholder="Search for...">#}
+{#                <span class="input-group-btn">#}
+{#                    <button type="button" class="btn btn-info" >#}
+{#                        <span class="fa fa-search"></span>#}
+{#                    </button>#}
+{#                </span>#}
+{#            </div>#}
         </div>
         <table class="table flextable" v-if="loading===false">
             <thead>
             <tr>
-                <th width="20%" scope="col">Number of qs</th>
+                <th width="20%" scope="col">
+                    <select v-model="selectedSortType" @change="onCategoryChange()">
+                        <option v-for="option in sortTypes" v-bind:value="option.value">
+                            ${ option.text }
+                        </option>
+                    </select>
+                </th>
                 <th width="60%" scope="col">Tag</th>
                 <th width="20%" scope="col">Action</th>
             </tr>
@@ -68,12 +92,12 @@
                         <h2>Time Trend</h2>
                         <div class="loading" v-if="loadingGraph===true">Loading&#8230;</div>
                         <line-chart v-if="loadingGraph===false" :points="false" :data="chartData"></line-chart>
-                        <button class="btn btn-info" v-on:click="updateRange('now 1-d')">Last Day</button>
-                        <button class="btn btn-info" v-on:click="updateRange('now 7-d')">Last Week</button>
-                        <button class="btn btn-info" v-on:click="updateRange('now 1-m')">Last Month</button>
+                        <button class="btn btn-info" v-on:click="updateRangeForGraph('now 1-d')">Last Day</button>
+                        <button class="btn btn-info" v-on:click="updateRangeForGraph('now 7-d')">Last Week</button>
+                        <button class="btn btn-info" v-on:click="updateRangeForGraph('now 1-m')">Last Month</button>
                         {#                        <button class="btn btn-info" v-on:click="getAllTime()">All Time</button>#}
-                        <button class="btn btn-info" v-on:click="updateRange('now 1-y')">Last Year</button>
-                        <button class="btn btn-info" v-on:click="showSelectCustomRange()">Custom range</button>
+                        <button class="btn btn-info" v-on:click="updateRangeForGraph('now 1-y')">Last Year</button>
+                        <button class="btn btn-info" v-on:click="showSelectCustomRangeForGraph()">Custom range</button>
                         <br/>
                         <br/>
                         <button class="btn btn-info" v-on:click="compare()">Compare</button>
@@ -118,9 +142,6 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        {#                            <div class="search-wrapper">#}
-                        {#                                <input type="text" v-model="search" placeholder="Search tag.."/>#}
-                        {#                            </div>#}
                         <div class="wrapper">
                             <div v-for="tag in tags">
                                 <div class="card" v-if="currentTagsIdsOnChart.indexOf(tag.id) === -1">
@@ -130,6 +151,29 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="customRangeForGraphModal" tabindex="-1" role="dialog"
+             aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLongTitle">Custom Range</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <v-date-picker
+                                :drag-attribute='dateRangeAttributes'
+                                :select-attribute='dateRangeAttributes' mode='range'
+                                v-model='selectedDates'
+                                :is-inline='isInline'></v-date-picker>
+                        <button :disabled="selectedDates==null" class="btn btn-info"
+                                v-on:click="selectCustomRangeForGraph()">Select
+                        </button>
                     </div>
                 </div>
             </div>
@@ -191,6 +235,7 @@
             chartData: [],
             questions: [],
             period: '',
+            periodForGraph: '',
             currentTagsIdsOnChart: [],
             selectedDates: null,
             datePickerModel: null,
@@ -203,18 +248,30 @@
             selectedCategory: null,
             selectedCategoryForGraph: null,
             options: [
-                {value: null, text: 'All'},
+                {value: null, text: 'Все категории'},
             ],
             categories: [],
+            selectedSortType: 'qcount',
+            sortTypes: [
+                {value: 'qcount', text: 'Number of qs'},
+                {value: 'idf', text: 'IDF'},
+            ],
         },
         mounted: function () {
+            this.period = 'now 1-d';
             this.getCategories();
             this.getTags();
         },
         methods: {
             getTags: function () {
                 this.loading = true;
-                this.$http.get('/tags/')
+                this.$http.get(`/tags/`, {
+                    params: {
+                        sortType: this.selectedSortType,
+                        date: this.period,
+                        catid: this.selectedCategory
+                    }
+                })
                     .then((response) => {
                         this.tags = response.data;
                         this.loading = false;
@@ -236,34 +293,24 @@
                         console.log(err);
                     })
             },
-            getTagsWithCategory: function (categoryId) {
-                this.loading = true;
-                this.$http.get(`/tags/${categoryId}`)
-                    .then((response) => {
-                        this.tags = response.data;
-                        this.loading = false;
-                    })
-                    .catch((err) => {
-                        this.loading = false;
-                        console.log(err);
-                    })
-            },
             getTag: function (id) {
                 this.loadingGraph = true;
                 this.loadingQuestions = true;
                 this.currentTag = id;
                 this.currentTagsIdsOnChart = [this.currentTag];
                 this.selectedCategoryForGraph = this.selectedCategory;
+                this.selectedSortType = 'qcount';
                 $("#tagDetailsModal").modal('show');
-                this.period = 'now 1-d';
-                this.getQuestions('now 1-d');
-                this.getGraphForMultipleTags('now 1-d');
+                this.periodForGraph = this.period;
+                this.getQuestions();
+                this.getGraphForMultipleTags();
             },
             getQuestions: function () {
                 this.loadingQuestions = true;
                 this.$http.get(`/questions/`, {
                     params: {
                         tags: this.currentTagsIdsOnChart,
+                        date: this.periodForGraph,
                         catid: this.selectedCategoryForGraph
                     }
                 })
@@ -278,11 +325,10 @@
             },
             getGraphForMultipleTags: function () {
                 this.loadingGraph = true;
-
                 this.$http.get(`/graph/`, {
                     params: {
                         tags: this.currentTagsIdsOnChart,
-                        date: this.period,
+                        date: this.periodForGraph,
                         catid: this.selectedCategoryForGraph
                     }
                 })
@@ -298,6 +344,17 @@
             compare: function () {
                 $("#tagCompareModal").modal('show');
             },
+            showSelectCustomRangeForGraph: function () {
+                $("#customRangeForGraphModal").modal('show');
+                this.selectedDates = null;
+            },
+            selectCustomRangeForGraph: function () {
+                this.loadingGraph = true;
+                $("#customRangeForGraphModal").modal('hide');
+                this.periodForGraph = this.selectedDates.start.toISOString() + " " + this.selectedDates.end.toISOString();
+                this.getGraphForMultipleTags();
+                this.getQuestions();
+            },
             showSelectCustomRange: function () {
                 $("#customRangeModal").modal('show');
                 this.selectedDates = null;
@@ -306,7 +363,7 @@
                 this.loadingGraph = true;
                 $("#customRangeModal").modal('hide');
                 this.period = this.selectedDates.start.toISOString() + " " + this.selectedDates.end.toISOString();
-                this.getGraphForMultipleTags();
+                this.getTags();
             },
             toQuestion: function (id) {
                 return "https://otvet.mail.ru/question/" + id;
@@ -324,20 +381,20 @@
                 this.getQuestions();
             },
             onCategoryChange: function () {
-                if (this.selectedCategory == null) {
-                    this.getTags();
-                } else {
-                    this.getTagsWithCategory(this.selectedCategory);
-                }
+                this.getTags();
             },
             onCategoryChangeForGraph: function () {
                 this.getGraphForMultipleTags();
                 this.getQuestions();
             },
-            updateRange: function (period) {
-                this.period = period;
+            updateRangeForGraph: function (period) {
+                this.periodForGraph = period;
                 this.getGraphForMultipleTags();
                 this.getQuestions();
+            },
+            updateRange: function (period) {
+                this.period = period;
+                this.getTags()
             }
         }
 

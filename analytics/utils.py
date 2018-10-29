@@ -13,6 +13,7 @@ from nltk.corpus import brown
 from nltk.util import ngrams
 from bs4 import BeautifulSoup
 import string
+from collections import Counter as cntr
 
 from analytics.models import Question, Category, Tag, Counter, GlobalCounter
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
@@ -24,7 +25,7 @@ stop_words = nltk.corpus.stopwords.words('russian')
 stop_words.extend(
     ['хочу', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'нужно', 'вопрос', 'какие', 'подскажите', 'делать',
      'спасибо', 'как', 'помогите', 'пожалуйста', 'очень', 'почему', 'что', 'это', 'так', 'вот', 'быть', 'как', 'в', '—',
-     'к', 'на', '`', '``', '.', '...', '..', u"''"])
+     'к', 'на', '`', '``', '.', '...', '..', "''"])
 stop_words = set(stop_words)
 punctuation = set(string.punctuation)
 
@@ -87,7 +88,7 @@ def save_question(qdata):
         question = Question(text=qdata['text'].replace("\n", " "), created_at=qdata['date'], id=qdata['id'],
                             rating=qdata['rating'])
         question.save()
-        tokens = tokenize_me(qdata['text'])
+        tokens = tokenize_me(qdata['text'].replace("\n", " "))
         category = update_category(qdata['cat_title'], qdata['cat_id'], question.id)
         tags = []
         for token in tokens:
@@ -107,13 +108,18 @@ def tokenize_me(input_text):
     tokens = [t for t in tokens if t not in stop_words]
     normalized_tokens = []
     for t in tokens:
-        new_token = morph.parse(t)[0]
-        if new_token.tag.POS is None:
-            if str(new_token.tag) in ['UNKN', 'LATN']:
+        t = t.strip(string.punctuation)
+        if len(t)>1:
+            new_token = morph.parse(t)[0]
+            if new_token.tag.POS is None:
+                if str(new_token.tag) in ['UNKN', 'LATN']:
+                    normalized_tokens.append(new_token.normal_form)
+            elif new_token.tag.POS in ['NOUN', 'VERB', 'INFN','ADJF','ADJS']:
                 normalized_tokens.append(new_token.normal_form)
-        elif new_token.tag.POS in ['NOUN', 'VERB', 'INFN']:
-            normalized_tokens.append(new_token.normal_form)
     tokens = set(normalized_tokens)
+    bigrams = ngrams(tokens,2)
+    for k1,k2 in cntr(bigrams):
+        tokens.add(k1+" "+k2)
     return tokens
 
 

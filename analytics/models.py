@@ -13,7 +13,7 @@ class Category(models.Model):
 
 class Question(models.Model):
     text = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=False)
+    created_at = models.DateTimeField(auto_now_add=False,db_index=True)
     rating = models.IntegerField(default=None, blank=True, null=True)
     poll_type = models.IntegerField(default=None, blank=True, null=True)
     category = models.ForeignKey(Category, related_name='questions', default=None, blank=True, null=True)
@@ -25,13 +25,19 @@ class Question(models.Model):
             self.text[:30])
         return result
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['-created_at'])
+        ]
+
     # class Meta:
     #     ordering = ['created_at']
 
 
+
 class Tag(models.Model):
-    text = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=False)
+    text = models.TextField(db_index=True)
+    created_at = models.DateTimeField(auto_now_add=False,)
     questions = models.ManyToManyField(Question, related_name='tags')
     questions_count = models.IntegerField(default=None, blank=True, null=True)
     global_idf = models.FloatField(default=None, blank=True, null=True)
@@ -48,10 +54,15 @@ class Tag(models.Model):
 
 
 class Counter(models.Model):
-    datetime = models.DateTimeField(auto_now_add=False)
+    datetime = models.DateTimeField(auto_now_add=False,db_index=True)
     tag = models.ForeignKey(Tag, related_name='counters')
     category = models.ForeignKey(Category)
     count = models.IntegerField()
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['-datetime'])
+        ]
 
 
 class GlobalCounter(models.Model):  # счетчик слово-категория, только за все время
