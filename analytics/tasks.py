@@ -54,9 +54,9 @@ def import_new():
                     print(end3 - end2)
                     print("loaded page: {}".format(i + 1))
                 print('update_global_idf_start')
-                update_global_idf()
+                # update_global_idf()
                 print('update_local_idf_start')
-                update_local_idf()
+                # update_local_idf()
             except Exception as e:
                 print(e)
             return

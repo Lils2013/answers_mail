@@ -95,7 +95,7 @@ def save_question(qdata):
         for token in tokens:
             tag = update_tag(tag_text=token, category_id=category.id, question_id=question.id, date=qdata['date'])
             tags.append(tag)
-            update_global_counter(tag_id=tag.id, category_id=category.id)
+            # update_global_counter(tag_id=tag.id, category_id=category.id)
         end1 = datetime.now()
         print(end1 - start)
         update_counter(qdata, tags)
