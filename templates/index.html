@@ -24,7 +24,7 @@
 <div id="starting">
     <div class="container">
         <h1>
-            <p class="text-center">Popular tags</p>
+            <p class="text-center">Популярные темы за ${ getText(period) }</p>
         </h1>
         <div class="btn-toolbar btn-group-justified" role="toolbar" aria-label="Toolbar with button groups">
             <div class="btn-group mr-2" role="group" aria-label="First group">
@@ -263,6 +263,19 @@
             this.getTags();
         },
         methods: {
+            getText: function (period) {
+                if (period == 'now 1-d')
+                    return 'последний день';
+                else if (period == 'now 7-d')
+                    return 'последнюю неделю';
+                else if (period == 'now 1-m')
+                    return 'последний месяц';
+                else if (period == 'now 1-y')
+                    return 'последний год';
+                else if (this.selectedDates != null)
+                    return this.selectedDates.start.toLocaleDateString() + " - " + this.selectedDates.end.toLocaleDateString();
+                return period;
+            },
             getTags: function () {
                 this.loading = true;
                 this.$http.get(`/tags/`, {
