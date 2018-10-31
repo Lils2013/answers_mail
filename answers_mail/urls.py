@@ -25,7 +25,7 @@ from .routers import router
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^api/', include(router.urls)),
-    url(r'^answers/', TemplateView.as_view(template_name='index.html')),
+    url(r'^$', TemplateView.as_view(template_name='index.html')),
     # url(r'^import/$', import_from_api_view),
     # url(r'^import_from_dump/$', import_from_dump),
     # url(r'^import/(?P<page_from>\d+)$', import_from_api_view),
