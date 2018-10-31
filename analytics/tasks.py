@@ -5,9 +5,9 @@ from celery import shared_task
 from datetime import datetime
 
 from django.core.cache import cache
-from django.test import RequestFactory
+# from django.test import RequestFactory
 
-from analytics import views
+# from analytics import views
 
 LOCK_EXPIRE = 60 * 10
 
@@ -90,39 +90,39 @@ def memcache_lock(lock_id, oid):
             cache.delete(lock_id)
 
 
-
-def cache_details(factory, tags, date, catid):
-    for t in tags:
-        views.get_questions(factory.get('/questions/?tags%5B%5D={}&date={}&catid={}'.format(t['id'], date, catid)))
-        views.graphs(factory.get('/questions/?tags%5B%5D={}&date={}&catid={}'.format(t['id'], date, catid)))
-
-
-def init_requests_cache():
-    print("Init frequent requests cache")
-    now = datetime.now()
-    factory = RequestFactory()
-    tags = views.tags(factory.get('/tags/?sortType=qcount&date=now+1-d&catid=')).data
-    cache_details(factory, tags, 'now+1-d', '')
-    tags = views.tags(factory.get('/tags/?sortType=qcount&date=now+7-d&catid=')).data
-    # cache_details(factory, tags, 'now+7-d', '')
-    tags = views.tags(factory.get('/tags/?sortType=qcount&date=now+1-m&catid=')).data
-    # cache_details(factory, tags, 'now+1-m', '')
-    tags = views.tags(factory.get('/tags/?sortType=qcount&date=now+1-y&catid=')).data
-    # cache_details(factory, tags, 'now+1-y', '')
-
-    cats = views.categories(factory.get('/categories/')).data
-    for cat in cats:
-        cat_id = cat['id']
-        print("caching category {}".format(cat_id))
-        tags = views.tags(factory.get('/tags/?sortType=qcount&date=now+1-d&catid={}'.format(cat_id))).data
-        # cache_details(factory, tags, 'now+1-d', cat_id)
-
-        tags = views.tags(factory.get('/tags/?sortType=qcount&date=now+7-d&catid={}'.format(cat_id))).data
-        # cache_details(factory, tags, 'now+7-d', cat_id)
-
-        tags = views.tags(factory.get('/tags/?sortType=qcount&date=now+1-m&catid={}'.format(cat_id))).data
-        # cache_details(factory, tags, 'now+1-m', cat_id)
-
-        tags = views.tags(factory.get('/tags/?sortType=qcount&date=now+1-y&catid={}'.format(cat_id))).data
-        # cache_details(factory, tags, 'now+1-y', cat_id)
-    print("full cache time: {}".format(datetime.now() - now))
+#
+# def cache_details(factory, tags, date, catid):
+#     for t in tags:
+#         views.get_questions(factory.get('/questions/?tags%5B%5D={}&date={}&catid={}'.format(t['id'], date, catid)))
+#         views.graphs(factory.get('/questions/?tags%5B%5D={}&date={}&catid={}'.format(t['id'], date, catid)))
+#
+#
+# def init_requests_cache():
+#     print("Init frequent requests cache")
+#     now = datetime.now()
+#     factory = RequestFactory()
+#     tags = views.tags(factory.get('/tags/?sortType=qcount&date=now+1-d&catid=')).data
+#     cache_details(factory, tags, 'now+1-d', '')
+#     tags = views.tags(factory.get('/tags/?sortType=qcount&date=now+7-d&catid=')).data
+#     # cache_details(factory, tags, 'now+7-d', '')
+#     tags = views.tags(factory.get('/tags/?sortType=qcount&date=now+1-m&catid=')).data
+#     # cache_details(factory, tags, 'now+1-m', '')
+#     tags = views.tags(factory.get('/tags/?sortType=qcount&date=now+1-y&catid=')).data
+#     # cache_details(factory, tags, 'now+1-y', '')
+#
+#     cats = views.categories(factory.get('/categories/')).data
+#     for cat in cats:
+#         cat_id = cat['id']
+#         print("caching category {}".format(cat_id))
+#         tags = views.tags(factory.get('/tags/?sortType=qcount&date=now+1-d&catid={}'.format(cat_id))).data
+#         # cache_details(factory, tags, 'now+1-d', cat_id)
+#
+#         tags = views.tags(factory.get('/tags/?sortType=qcount&date=now+7-d&catid={}'.format(cat_id))).data
+#         # cache_details(factory, tags, 'now+7-d', cat_id)
+#
+#         tags = views.tags(factory.get('/tags/?sortType=qcount&date=now+1-m&catid={}'.format(cat_id))).data
+#         # cache_details(factory, tags, 'now+1-m', cat_id)
+#
+#         tags = views.tags(factory.get('/tags/?sortType=qcount&date=now+1-y&catid={}'.format(cat_id))).data
+#         # cache_details(factory, tags, 'now+1-y', cat_id)
+#     print("full cache time: {}".format(datetime.now() - now))
