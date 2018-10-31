@@ -17,6 +17,9 @@ from collections import Counter as cntr
 
 from analytics.models import Question, Category, Tag, Counter, GlobalCounter
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.core.cache import cache
+import re
+
 
 morph = pymorphy2.MorphAnalyzer()
 stemmer = SnowballStemmer("russian")
@@ -28,6 +31,8 @@ stop_words.extend(
      'к', 'на', '`', '``', '.', '...', '..', "''"])
 stop_words = set(stop_words)
 punctuation = set(string.punctuation)
+
+CACHE_TIME = 60 * 60
 
 
 def get_api_page(page_from, page_size):
@@ -253,3 +258,23 @@ def import_from_api(page_from, amount):
     return html
 
 # 210800000-88111
+
+
+def generate_cache_name(method_name, args_list):
+    key = method_name
+    for k in args_list:
+        key += '_{}'.format(k)
+    #     todo: лучше хэшировать, но для дебага хочется видеть значения
+    return re.sub("[^A-Za-z0-9]", '_', key)
+
+
+def get_request_cache(method_name, args_list):
+    key = generate_cache_name(method_name, args_list)
+    # print("trying get from cache: {}".format(key))
+    return cache.get(key)
+
+
+def set_request_cache(method_name, data, args_list):
+    key = generate_cache_name(method_name, args_list)
+    # print("trying save to cache: {}".format(key))
+    return cache.set(key, data, CACHE_TIME)

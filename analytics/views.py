@@ -16,7 +16,7 @@ from analytics.models import Category, Counter
 from analytics.models import Question, Tag
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 import re
-from .utils import import_from_api
+from .utils import import_from_api, get_request_cache, set_request_cache
 import dateutil.parser
 
 
@@ -119,6 +119,11 @@ def get_questions(request, page_size=50):
             category_id = int(category_id)
     except ValueError:
         return Response({'status': 500, 'error': 'incorrect catid'})
+
+    cached_data = get_request_cache("get_questions", [time_interval, category_id, tags])
+    if cached_data is not None and request.method == 'GET':
+        return Response(cached_data)
+
     try:
         # Question.objects.all().filter(category_id=category_id, tags__id=tagid)
         start_date, end_date, _ = parse_date(time_interval)
@@ -134,6 +139,7 @@ def get_questions(request, page_size=50):
     if request.method == 'GET':
         # paginator = Paginator(questions, page_size)
         serializer = QuestionSerializer(questions[:page_size], many=True)
+        set_request_cache("get_questions", serializer.data, [time_interval, category_id, tags])
         return Response(serializer.data)
 
 
@@ -166,8 +172,14 @@ def graphs(request):
         points_per_day = 1
     else:
         points_per_day = ppd[days]
+
+    cached_data = get_request_cache("graphs", [tags, days, points_per_day, category_id, start_date, end_date])
+    if cached_data is not None:
+        return Response(cached_data)
+
     data = get_last_graph_data(tags, days, points_per_day, category_id=category_id, start_date=start_date, end_date=end_date, only_existing_data=False)
 
+    set_request_cache("graphs", data, [tags, days, points_per_day, category_id, start_date, end_date])
     return Response(data)
 
 
@@ -188,6 +200,11 @@ def tags(request):
     if sort_type not in ['idf', 'qcount']:
         return Response({'status': 500, 'error': 'incorrect sort_type'})
     start_date, end_date, _ = parse_date(time_interval)
+
+    rows = get_request_cache("tags", [time_interval, category_id, sort_type])
+    if rows is not None and request.method == 'GET':
+        return Response(rows)
+
     with connection.cursor() as cursor:
         if start_date is None:
             if category_id is None:
@@ -237,6 +254,7 @@ def tags(request):
                         "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50", [category_id, start_date, end_date])
         rows = dictfetchall(cursor)
 
+    set_request_cache("tags", rows, [time_interval, category_id, sort_type])
     if request.method == 'GET':
         return Response(rows)
 
@@ -280,7 +298,7 @@ def get_last_graph_data(tags, days, points_per_day, category_id=None, start_date
         start_date = end_date - timedelta(days=days)
         pass
     delta_hours = 24 / points_per_day
-    print(timedelta(hours=delta_hours))
+    # print(timedelta(hours=delta_hours))
     data = []
     for tag in tags:
         data_for_tag = {}
