@@ -165,7 +165,7 @@ def graphs(request):
         return Response({'status': 500, 'error': 'incorrect catid'})
 
     # points per days
-    ppd = {0: 0.1, 1: 24, 7: 6, 30: 1, 365: 0.2}
+    ppd = {0: 0.1, 1: 24, 7: 6, 30: 1, 365: 0.05}
 
     start_date, end_date, days = parse_date(time_interval)
     if days is None or ppd.get(days) is None:
