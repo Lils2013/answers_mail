@@ -208,50 +208,50 @@ def tags(request):
     with connection.cursor() as cursor:
         if start_date is None:
             if category_id is None:
-                if sort_type == 'idf':
-                    cursor.execute(
-                        "SELECT at.text as text, ac.tag_id as id, at.global_idf  AS questions_count FROM analytics_counter ac "
-                        "INNER JOIN analytics_tag at ON ac.tag_id = at.id "
-                        "GROUP BY ac.tag_id, at.text, at.global_idf ORDER BY at.global_idf DESC LIMIT 50 ")
-                else:
-                    cursor.execute(
-                        "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
-                        "INNER JOIN analytics_tag at ON ac.tag_id = at.id "
-                        "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50")
+                # if sort_type == 'idf':
+                #     cursor.execute(
+                #         "SELECT at.text as text, ac.tag_id as id, at.global_idf  AS questions_count FROM analytics_counter ac "
+                #         "INNER JOIN analytics_tag at ON ac.tag_id = at.id "
+                #         "GROUP BY ac.tag_id, at.text, at.global_idf ORDER BY at.global_idf DESC LIMIT 50 ")
+                # else:
+                cursor.execute(
+                    "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
+                    "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE at.questions_count > 20 "
+                    "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50")
             else:
-                if sort_type == 'idf':
-                    cursor.execute(
-                        "SELECT at.text as text, gc.tag_id as id, gc.local_idf  AS questions_count FROM analytics_globalcounter gc "
-                        "INNER JOIN analytics_tag at ON gc.tag_id = at.id WHERE gc.category_id = %s "
-                        "GROUP BY gc.tag_id, at.text, gc.local_idf ORDER BY gc.local_idf DESC LIMIT 50", [category_id])
-                else:
-                    cursor.execute(
-                        "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
-                        "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.category_id = %s "
-                        "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50", [category_id])
+                # if sort_type == 'idf':
+                #     cursor.execute(
+                #         "SELECT at.text as text, gc.tag_id as id, gc.local_idf  AS questions_count FROM analytics_globalcounter gc "
+                #         "INNER JOIN analytics_tag at ON gc.tag_id = at.id WHERE gc.category_id = %s "
+                #         "GROUP BY gc.tag_id, at.text, gc.local_idf ORDER BY gc.local_idf DESC LIMIT 50", [category_id])
+                # else:
+                cursor.execute(
+                    "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
+                    "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.category_id = %s AND at.questions_count > 20 "
+                    "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50", [category_id])
         else:
             if category_id is None:
-                if sort_type == 'idf':
-                    cursor.execute(
-                        "SELECT at.text as text, ac.tag_id as id, at.global_idf  AS questions_count FROM analytics_counter ac "
-                        "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.datetime > %s AND ac.datetime < %s "
-                        "GROUP BY ac.tag_id, at.text, at.global_idf ORDER BY at.global_idf DESC LIMIT 50 ", [start_date, end_date])
-                else:
-                    cursor.execute(
-                        "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
-                        "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.datetime > %s AND ac.datetime < %s "
-                        "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50", [start_date, end_date])
+                # if sort_type == 'idf':
+                #     cursor.execute(
+                #         "SELECT at.text as text, ac.tag_id as id, at.global_idf  AS questions_count FROM analytics_counter ac "
+                #         "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.datetime > %s AND ac.datetime < %s "
+                #         "GROUP BY ac.tag_id, at.text, at.global_idf ORDER BY at.global_idf DESC LIMIT 50 ", [start_date, end_date])
+                # else:
+                cursor.execute(
+                    "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
+                    "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.datetime > %s AND ac.datetime < %s AND at.questions_count > 20 "
+                    "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50", [start_date, end_date])
             else:
-                if sort_type == 'idf':
-                    cursor.execute(
-                        "SELECT at.text as text, gc.tag_id as id, gc.local_idf  AS questions_count FROM analytics_globalcounter gc "
-                        "INNER JOIN analytics_tag at ON gc.tag_id = at.id WHERE gc.category_id = %s"
-                        "GROUP BY gc.tag_id, at.text, gc.local_idf ORDER BY gc.local_idf DESC LIMIT 50", [category_id])
-                else:
-                    cursor.execute(
-                        "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
-                        "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.category_id = %s AND ac.datetime > %s AND ac.datetime < %s "
-                        "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50", [category_id, start_date, end_date])
+                # if sort_type == 'idf':
+                #     cursor.execute(
+                #         "SELECT at.text as text, gc.tag_id as id, gc.local_idf  AS questions_count FROM analytics_globalcounter gc "
+                #         "INNER JOIN analytics_tag at ON gc.tag_id = at.id WHERE gc.category_id = %s"
+                #         "GROUP BY gc.tag_id, at.text, gc.local_idf ORDER BY gc.local_idf DESC LIMIT 50", [category_id])
+                # else:
+                cursor.execute(
+                    "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
+                    "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.category_id = %s AND ac.datetime > %s AND ac.datetime < %s AND at.questions_count > 20 "
+                    "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50", [category_id, start_date, end_date])
         rows = dictfetchall(cursor)
 
     set_request_cache("tags", rows, [time_interval, category_id, sort_type])
