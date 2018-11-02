@@ -216,7 +216,7 @@ def tags(request):
                 # else:
                 cursor.execute(
                     "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
-                    "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE at.questions_count > 20 "
+                    "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE at.questions_count > 100 "
                     "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50")
             else:
                 # if sort_type == 'idf':
@@ -227,7 +227,7 @@ def tags(request):
                 # else:
                 cursor.execute(
                     "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
-                    "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.category_id = %s AND at.questions_count > 20 "
+                    "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.category_id = %s AND at.questions_count > 100 "
                     "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50", [category_id])
         else:
             if category_id is None:
@@ -239,7 +239,7 @@ def tags(request):
                 # else:
                 cursor.execute(
                     "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
-                    "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.datetime > %s AND ac.datetime < %s AND at.questions_count > 20 "
+                    "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.datetime > %s AND ac.datetime < %s AND at.questions_count > 100 "
                     "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50", [start_date, end_date])
             else:
                 # if sort_type == 'idf':
@@ -250,7 +250,7 @@ def tags(request):
                 # else:
                 cursor.execute(
                     "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
-                    "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.category_id = %s AND ac.datetime > %s AND ac.datetime < %s AND at.questions_count > 20 "
+                    "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.category_id = %s AND ac.datetime > %s AND ac.datetime < %s AND at.questions_count > 100 "
                     "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50", [category_id, start_date, end_date])
         rows = dictfetchall(cursor)
 
