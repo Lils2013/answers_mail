@@ -30,7 +30,7 @@ def import_new():
         if acquired:
             # start_id = 211130000
             try:
-                start_id = Question.objects.latest('id').id - 1
+                start_id = Question.objects.latest('id').id + 1
             except Exception as e:
                 start_id = 210775613
                 pass
@@ -57,7 +57,7 @@ def import_new():
                     save_question(parsed)
                     end3 = datetime.now()
                     print(end3 - end2)
-                    print("loaded page: {}".format(i - 1))
+                    print("loaded page: {}".format(i))
                 print('update_global_idf_start')
                 # update_global_idf()
                 print('update_local_idf_start')

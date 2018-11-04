@@ -223,7 +223,7 @@ def tags(request):
                     "SELECT at.text, t1.id, t1.questions_count FROM "
                     "(SELECT  ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
                     "GROUP BY ac.tag_id ORDER BY SUM(ac.count) DESC LIMIT 50) t1 "
-                    "INNER JOIN analytics_tag at ON t1.id = at.id ")
+                    "INNER JOIN analytics_tag at ON t1.id = at.id WHERE at.questions_count > 10")
 
 
             else:
@@ -243,7 +243,7 @@ def tags(request):
                     "(SELECT  ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
                     "WHERE ac.category_id = %s "
                     "GROUP BY ac.tag_id ORDER BY SUM(ac.count) DESC LIMIT 50) t1 "
-                    "INNER JOIN analytics_tag at ON t1.id = at.id ", [category_id])
+                    "INNER JOIN analytics_tag at ON t1.id = at.id WHERE at.questions_count > 10 ", [category_id])
         else:
             if category_id is None:
                 # if sort_type == 'idf':
@@ -266,7 +266,7 @@ def tags(request):
                     "(SELECT  ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
                     "WHERE ac.datetime > %s AND ac.datetime < %s  "
                     "GROUP BY ac.tag_id ORDER BY SUM(ac.count) DESC LIMIT 50) t1 "
-                    "INNER JOIN analytics_tag at ON t1.id = at.id ", [start_date, end_date])
+                    "INNER JOIN analytics_tag at ON t1.id = at.id WHERE at.questions_count > 10 ", [start_date, end_date])
                 # print("new sql: {}".format(datetime.now() - timer_start))
 
             else:
@@ -286,7 +286,7 @@ def tags(request):
                     "(SELECT  ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
                     "WHERE ac.category_id = %s AND ac.datetime > %s AND ac.datetime < %s  "
                     "GROUP BY ac.tag_id ORDER BY SUM(ac.count) DESC LIMIT 50) t1 "
-                    "INNER JOIN analytics_tag at ON t1.id = at.id ", [category_id, start_date, end_date])
+                    "INNER JOIN analytics_tag at ON t1.id = at.id WHERE at.questions_count > 10 ", [category_id, start_date, end_date])
         rows = dictfetchall(cursor)
 
     set_request_cache("tags", rows, [time_interval, category_id, sort_type])
