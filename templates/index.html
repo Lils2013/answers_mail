@@ -34,7 +34,6 @@
                     </option>
                 </select>
             </div>
-            {#            <h2>Time range: </h2>#}
             <div class="btn-group mr-2" role="group" aria-label="Second group">
                 <button type="button" class="btn btn-info" v-on:click="updateRange('now 1-d')">Last Day</button>
                 <button type="button" class="btn btn-info" v-on:click="updateRange('now 7-d')">Last Week</button>
@@ -138,14 +137,16 @@
                     </div>
                     <div class="modal-body">
                         <div class="wrapper">
-                            <input type="text" v-model="searchText" class="form-control" placeholder="Search for...">
-                            <div v-for="tag in filteredTagList">
+                            <input type="text" @change="onSearchChange()" v-model="searchText" class="form-control"
+                                   placeholder="Search for...">
+                            <div v-for="tag in tagList" v-if="loadingSearch===false">
                                 <div class="card" v-if="currentTagsIdsOnChart.indexOf(tag.id) === -1">
                                     <a href="#" onClick="return false;" v-on:click="addToGraph(tag.id)">
                                         ${tag.text}
                                     </a>
                                 </div>
                             </div>
+                            <div class="loading" v-if="loadingSearch===true">Loading&#8230;</div>
                         </div>
                     </div>
                 </div>
@@ -163,14 +164,16 @@
                     </div>
                     <div class="modal-body">
                         <div class="wrapper">
-                            <input type="text" v-model="searchText" class="form-control" placeholder="Search for...">
-                            <div v-for="tag in filteredTagList">
+                            <input type="text" @change="onSearchChange()" v-model="searchText" class="form-control"
+                                   placeholder="Search for...">
+                            <div v-for="tag in tagList" v-if="loadingSearch===false">
                                 <div class="card">
                                     <a href="#" onClick="return false;" v-on:click="openTagFromSearch(tag.id)">
                                         ${tag.text}
                                     </a>
                                 </div>
                             </div>
+                            <div class="loading" v-if="loadingSearch===true">Loading&#8230;</div>
                         </div>
                     </div>
                 </div>
@@ -252,6 +255,7 @@
             loading: false,
             loadingGraph: false,
             loadingQuestions: false,
+            loadingSearch: false,
             currentTag: {},
             search: '',
             chartData: [],
@@ -451,13 +455,22 @@
             updateRange: function (period) {
                 this.period = period;
                 this.getTags()
-            }
-        },
-        computed: {
-            filteredTagList() {
-                return this.tagList.filter(tag => {
-                    return tag.text.toLowerCase().includes(this.searchText.toLowerCase())
-                }).slice(0,100)
+            },
+            onSearchChange: function () {
+                this.loadingSearch = true;
+                this.$http.get(`/tags-search/`, {
+                    params: {
+                        searchText: this.searchText
+                    }
+                })
+                    .then((response) => {
+                        this.tagList = response.data;
+                        this.loadingSearch = false;
+                    })
+                    .catch((err) => {
+                        this.loadingSearch = false;
+                        console.log(err);
+                    });
             }
         }
     });

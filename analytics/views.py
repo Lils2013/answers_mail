@@ -208,36 +208,12 @@ def tags(request):
     with connection.cursor() as cursor:
         if start_date is None:
             if category_id is None:
-                # if sort_type == 'idf':
-                #     cursor.execute(
-                #         "SELECT at.text as text, ac.tag_id as id, at.global_idf  AS questions_count FROM analytics_counter ac "
-                #         "INNER JOIN analytics_tag at ON ac.tag_id = at.id "
-                #         "GROUP BY ac.tag_id, at.text, at.global_idf ORDER BY at.global_idf DESC LIMIT 50 ")
-                # else:
-                # cursor.execute(
-                #     "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
-                #     "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE at.questions_count > 100 "
-                #     "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50")
-
                 cursor.execute(
                     "SELECT at.text, t1.id, t1.questions_count FROM "
                     "(SELECT  ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
                     "GROUP BY ac.tag_id ORDER BY SUM(ac.count) DESC LIMIT 50) t1 "
                     "INNER JOIN analytics_tag at ON t1.id = at.id WHERE at.questions_count > 10")
-
-
             else:
-                # if sort_type == 'idf':
-                #     cursor.execute(
-                #         "SELECT at.text as text, gc.tag_id as id, gc.local_idf  AS questions_count FROM analytics_globalcounter gc "
-                #         "INNER JOIN analytics_tag at ON gc.tag_id = at.id WHERE gc.category_id = %s "
-                #         "GROUP BY gc.tag_id, at.text, gc.local_idf ORDER BY gc.local_idf DESC LIMIT 50", [category_id])
-                # else:
-                # cursor.execute(
-                #     "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
-                #     "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.category_id = %s AND at.questions_count > 100 "
-                #     "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50", [category_id])
-
                 cursor.execute(
                     "SELECT at.text, t1.id, t1.questions_count FROM "
                     "(SELECT  ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
@@ -246,41 +222,13 @@ def tags(request):
                     "INNER JOIN analytics_tag at ON t1.id = at.id WHERE at.questions_count > 10 ", [category_id])
         else:
             if category_id is None:
-                # if sort_type == 'idf':
-                #     cursor.execute(
-                #         "SELECT at.text as text, ac.tag_id as id, at.global_idf  AS questions_count FROM analytics_counter ac "
-                #         "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.datetime > %s AND ac.datetime < %s "
-                #         "GROUP BY ac.tag_id, at.text, at.global_idf ORDER BY at.global_idf DESC LIMIT 50 ", [start_date, end_date])
-                # else:
-
-                # timer_start = datetime.now()
-                # cursor.execute(
-                #     "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
-                #     "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.datetime > %s AND ac.datetime < %s AND at.questions_count > 100 "
-                #     "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50", [start_date, end_date])
-                #
-                # print("old sql: {}".format(datetime.now() - timer_start))
-                # timer_start = datetime.now()
                 cursor.execute(
                     "SELECT at.text, t1.id, t1.questions_count FROM "
                     "(SELECT  ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
                     "WHERE ac.datetime > %s AND ac.datetime < %s  "
                     "GROUP BY ac.tag_id ORDER BY SUM(ac.count) DESC LIMIT 50) t1 "
                     "INNER JOIN analytics_tag at ON t1.id = at.id WHERE at.questions_count > 10 ", [start_date, end_date])
-                # print("new sql: {}".format(datetime.now() - timer_start))
-
             else:
-                # if sort_type == 'idf':
-                #     cursor.execute(
-                #         "SELECT at.text as text, gc.tag_id as id, gc.local_idf  AS questions_count FROM analytics_globalcounter gc "
-                #         "INNER JOIN analytics_tag at ON gc.tag_id = at.id WHERE gc.category_id = %s"
-                #         "GROUP BY gc.tag_id, at.text, gc.local_idf ORDER BY gc.local_idf DESC LIMIT 50", [category_id])
-                # else:
-                # cursor.execute(
-                #     "SELECT at.text as text, ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
-                #     "INNER JOIN analytics_tag at ON ac.tag_id = at.id WHERE ac.category_id = %s AND ac.datetime > %s AND ac.datetime < %s AND at.questions_count > 100 "
-                #     "GROUP BY ac.tag_id, at.text ORDER BY SUM(ac.count) DESC LIMIT 50", [category_id, start_date, end_date])
-
                 cursor.execute(
                     "SELECT at.text, t1.id, t1.questions_count FROM "
                     "(SELECT  ac.tag_id as id, SUM(ac.count) AS questions_count FROM analytics_counter ac "
@@ -296,16 +244,16 @@ def tags(request):
 
 @api_view(['GET'])
 def tags_search(request):
+    search_text = request.GET.get('searchText', None)
     try:
-        tags = sorted(Tag.objects.all().filter(questions_count__gt=10),
+        tags = sorted(Tag.objects.all().filter(questions_count__gt=10, text__icontains=search_text),
                       key=lambda i: i.questions_count,
                       reverse=True)
     except Tag.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        # paginator = Paginator(categories, page_size)
-        serializer = TagSerializer(tags, many=True)
+        serializer = TagSerializer(tags[:50], many=True)
         return Response(serializer.data)
 
 
