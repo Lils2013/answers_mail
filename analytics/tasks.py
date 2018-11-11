@@ -34,7 +34,7 @@ def import_new():
             except Exception as e:
                 start_id = 210775613
                 pass
-            pages = 10000
+            pages = 1000
             # start_id += pages + 1
             print("starting new API import from id {}".format(start_id))
             try:

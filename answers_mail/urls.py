@@ -31,6 +31,7 @@ urlpatterns = [
     url(r'^questions/(?P<pk>[0-9]+)$', views.tag_detail),
     url(r'^questions/$', views.get_questions),
     url(r'^tags/$', views.tags),
+    url(r'^tags-search/$', views.tags_search),
     # url(r'^tags/(?P<pk>[0-9]+)$', views.tags_with_category),
     # url(r'^tags/(?P<pk>[0-9]+)/(?P<sort_type>[\w\-]+)$', views.tags_with_category),
     # url(r'^tags/(?P<sort_type>[\w\-]+)$$', views.tags),

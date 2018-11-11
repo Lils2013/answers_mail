@@ -28,13 +28,13 @@
         </h1>
         <div class="btn-toolbar btn-group-justified" role="toolbar" aria-label="Toolbar with button groups">
             <div class="btn-group mr-2" role="group" aria-label="First group">
-                 <select v-model="selectedCategory" @change="onCategoryChange()">
+                <select v-model="selectedCategory" @change="onCategoryChange()">
                     <option v-for="option in options" v-bind:value="option.value">
                         ${ option.text }
                     </option>
                 </select>
             </div>
-{#            <h2>Time range: </h2>#}
+            {#            <h2>Time range: </h2>#}
             <div class="btn-group mr-2" role="group" aria-label="Second group">
                 <button type="button" class="btn btn-info" v-on:click="updateRange('now 1-d')">Last Day</button>
                 <button type="button" class="btn btn-info" v-on:click="updateRange('now 7-d')">Last Week</button>
@@ -42,15 +42,11 @@
                 <button type="button" class="btn btn-info" v-on:click="updateRange('now 1-y')">Last Year</button>
                 <button type="button" class="btn btn-info" v-on:click="showSelectCustomRange()">Custom range</button>
             </div>
-{#            search panel #}
-{#            <div class="input-group mr-3 " role="group" aria-label="Search group">#}
-{#                <input type="text" class="form-control" placeholder="Search for...">#}
-{#                <span class="input-group-btn">#}
-{#                    <button type="button" class="btn btn-info" >#}
-{#                        <span class="fa fa-search"></span>#}
-{#                    </button>#}
-{#                </span>#}
-{#            </div>#}
+            <div class="btn-group mr-2" role="group" aria-label="Search group">
+                <button type="button" class="btn btn-info" v-on:click="showSearchTag()">
+                    Search for tag
+                </button>
+            </div>
         </div>
         <table class="table flextable" v-if="loading===false">
             <thead>
@@ -95,7 +91,6 @@
                         <button class="btn btn-info" v-on:click="updateRangeForGraph('now 1-d')">Last Day</button>
                         <button class="btn btn-info" v-on:click="updateRangeForGraph('now 7-d')">Last Week</button>
                         <button class="btn btn-info" v-on:click="updateRangeForGraph('now 1-m')">Last Month</button>
-                        {#                        <button class="btn btn-info" v-on:click="getAllTime()">All Time</button>#}
                         <button class="btn btn-info" v-on:click="updateRangeForGraph('now 1-y')">Last Year</button>
                         <button class="btn btn-info" v-on:click="showSelectCustomRangeForGraph()">Custom range</button>
                         <br/>
@@ -143,9 +138,35 @@
                     </div>
                     <div class="modal-body">
                         <div class="wrapper">
-                            <div v-for="tag in tags">
+                            <input type="text" v-model="searchText" class="form-control" placeholder="Search for...">
+                            <div v-for="tag in filteredTagList">
                                 <div class="card" v-if="currentTagsIdsOnChart.indexOf(tag.id) === -1">
                                     <a href="#" onClick="return false;" v-on:click="addToGraph(tag.id)">
+                                        ${tag.text}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="tagSearchModal" tabindex="-1" role="dialog"
+             aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLongTitle">Tag Search</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="wrapper">
+                            <input type="text" v-model="searchText" class="form-control" placeholder="Search for...">
+                            <div v-for="tag in filteredTagList">
+                                <div class="card">
+                                    <a href="#" onClick="return false;" v-on:click="openTagFromSearch(tag.id)">
                                         ${tag.text}
                                     </a>
                                 </div>
@@ -227,6 +248,7 @@
         delimiters: ['${', '}'],
         data: {
             tags: [],
+            tagList: [],
             loading: false,
             loadingGraph: false,
             loadingQuestions: false,
@@ -256,11 +278,13 @@
                 {value: 'qcount', text: 'Number of qs'},
                 {#{value: 'idf', text: 'IDF'},#}
             ],
+            searchText: '',
         },
         mounted: function () {
             this.period = 'now 1-d';
             this.getCategories();
             this.getTags();
+            this.getTagsForSearch();
         },
         methods: {
             getText: function (period) {
@@ -287,6 +311,18 @@
                 })
                     .then((response) => {
                         this.tags = response.data;
+                        this.loading = false;
+                    })
+                    .catch((err) => {
+                        this.loading = false;
+                        console.log(err);
+                    })
+            },
+            getTagsForSearch: function () {
+                this.loading = true;
+                this.$http.get(`/tags-search/`)
+                    .then((response) => {
+                        this.tagList = response.data;
                         this.loading = false;
                     })
                     .catch((err) => {
@@ -361,6 +397,13 @@
                 $("#customRangeForGraphModal").modal('show');
                 this.selectedDates = null;
             },
+            showSearchTag: function () {
+                $("#tagSearchModal").modal('show');
+            },
+            openTagFromSearch: function (id) {
+                $("#tagSearchModal").modal('hide');
+                this.getTag(id);
+            },
             selectCustomRangeForGraph: function () {
                 this.loadingGraph = true;
                 $("#customRangeForGraphModal").modal('hide');
@@ -409,8 +452,14 @@
                 this.period = period;
                 this.getTags()
             }
+        },
+        computed: {
+            filteredTagList() {
+                return this.tagList.filter(tag => {
+                    return tag.text.toLowerCase().includes(this.searchText.toLowerCase())
+                }).slice(0,100)
+            }
         }
-
     });
 
 </script>

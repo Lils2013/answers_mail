@@ -295,6 +295,21 @@ def tags(request):
 
 
 @api_view(['GET'])
+def tags_search(request):
+    try:
+        tags = sorted(Tag.objects.all().filter(questions_count__gt=10),
+                      key=lambda i: i.questions_count,
+                      reverse=True)
+    except Tag.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        # paginator = Paginator(categories, page_size)
+        serializer = TagSerializer(tags, many=True)
+        return Response(serializer.data)
+
+
+@api_view(['GET'])
 def categories(request, page=1, page_size=50):
     try:
         categories = sorted(Category.objects.all(),
