@@ -25,10 +25,8 @@ morph = pymorphy2.MorphAnalyzer()
 stemmer = SnowballStemmer("russian")
 stop_words = nltk.corpus.stopwords.words('russian')
 # '' for python 2.7 only
-stop_words.extend(
-    ['хочу', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'нужно', 'вопрос', 'какие', 'подскажите', 'делать',
-     'спасибо', 'как', 'помогите', 'пожалуйста', 'очень', 'почему', 'что', 'это', 'так', 'вот', 'быть', 'как', 'в', '—',
-     'к', 'на', '`', '``', '.', '...', '..', "''"])
+stop_words.extend([u'хотеть', u'1', u'2', u'3', u'4', u'5', u'6', u'7', u'8', u'9', u'0', u'нужно', u'вопрос', u'как', u'подсказать', u'делать', u'спасибо', u'как', u'мочь', u'такой', u'который', u'ответ', u'помочь', u'пожалуйста', u'очень', u'почему', u'что', u'это', u'так', u'вот', u'быть', u'какой', u'в', u'—',
+     u'к', u'на', u'`', u'``', u'.', u'...', u'..', "''"])
 stop_words = set(stop_words)
 punctuation = set(string.punctuation)
 
@@ -115,7 +113,6 @@ def tokenize_me(input_text):
     text = soup.get_text()
     tokens = nltk.word_tokenize(text.lower())
     tokens = [i for i in tokens if (i not in punctuation)]
-    tokens = [t for t in tokens if t not in stop_words]
     normalized_tokens = []
     for t in tokens:
         t = t.strip(string.punctuation)
@@ -126,7 +123,8 @@ def tokenize_me(input_text):
                     normalized_tokens.append(new_token.normal_form)
             elif new_token.tag.POS in ['NOUN', 'VERB', 'INFN','ADJF','ADJS']:
                 normalized_tokens.append(new_token.normal_form)
-    tokens = set(normalized_tokens)
+    tokens = [t for t in normalized_tokens if t not in stop_words]
+    tokens = set(tokens)
     bigrams = ngrams(tokens,2)
     for k1,k2 in cntr(bigrams):
         tokens.add(k1+" "+k2)
