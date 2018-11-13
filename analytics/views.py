@@ -261,8 +261,7 @@ def tags_search(request):
 def categories(request, page=1, page_size=50):
     try:
         categories = sorted(Category.objects.all(),
-                      key=lambda i: i.questions_count,
-                      reverse=True)
+                      key=lambda i: i.name)
     except Category.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
