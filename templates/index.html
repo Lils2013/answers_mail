@@ -24,6 +24,9 @@
 <div id="starting">
     <div class="container">
         <h1>
+            <p class="text-center">Тренды Ответы Mail.Ru</p>
+        </h1>
+        <h1>
             <p class="text-center">Популярные темы за ${ getText(period) }</p>
         </h1>
         <div class="btn-toolbar btn-group-justified" role="toolbar" aria-label="Toolbar with button groups">
@@ -65,7 +68,7 @@
                 <th scope="row">${tag.questions_count}</th>
                 <th scope="row">
                     <a href="#" v-on:click="getTag(tag.id)">${tag.text}</a>
-{#                    <button class="btn btn-info" v-on:click="getTag(tag.id)">View Details</button>#}
+                    {#                    <button class="btn btn-info" v-on:click="getTag(tag.id)">View Details</button>#}
                 </th>
             </tr>
             </tbody>
@@ -90,7 +93,8 @@
                         <button class="btn btn-info" v-on:click="updateRangeForGraph('now 7-d')">За неделю</button>
                         <button class="btn btn-info" v-on:click="updateRangeForGraph('now 1-m')">За месяц</button>
                         <button class="btn btn-info" v-on:click="updateRangeForGraph('now 1-y')">За год</button>
-                        <button class="btn btn-info" v-on:click="showSelectCustomRangeForGraph()">Произвольный период</button>
+                        <button class="btn btn-info" v-on:click="showSelectCustomRangeForGraph()">Произвольный период
+                        </button>
                         <br/>
                         <br/>
                         <button class="btn btn-info" v-on:click="compare()">Сравнить</button>
