@@ -168,7 +168,7 @@ def graphs(request):
     ppd = {0: 0.1, 1: 24, 7: 6, 30: 1, 365: 0.1}
 
     start_date, end_date, days = parse_date(time_interval)
-    if days is None or (ppd.get(days) is None and days < 0):
+    if days is None or (ppd.get(days) is None and days < 60):
         points_per_day = 1
     elif ppd.get(days) is None and (60 <= days < 90):
         points_per_day = 0.5
