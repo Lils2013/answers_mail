@@ -26,6 +26,18 @@
         <h1>
             <p class="text-center">Тренды Ответы Mail.Ru</p>
         </h1>
+        <div class="wrapper">
+            <input type="text" @change="onSearchChangeMain()" v-model="searchTextMain" class="form-control"
+                   placeholder="Укажите тему для вопросов">
+            <div v-for="tag in tagListMain" v-if="loadingSearchMain===false">
+                <div class="card">
+                    <a href="#" onClick="return false;" v-on:click="openTagFromSearch(tag.id)">
+                        ${tag.text}
+                    </a>
+                </div>
+            </div>
+            <div class="loading" v-if="loadingSearchMain===true">Загрузка&#8230;</div>
+        </div>
         <h1>
             <p class="text-center">Популярные темы за ${ getText(period) }</p>
         </h1>
@@ -42,11 +54,14 @@
                 <button type="button" class="btn btn-info" v-on:click="updateRange('now 7-d')">За неделю</button>
                 <button type="button" class="btn btn-info" v-on:click="updateRange('now 1-m')">За месяц</button>
                 <button type="button" class="btn btn-info" v-on:click="updateRange('now 1-y')">За год</button>
-                <button type="button" class="btn btn-info" v-on:click="showSelectCustomRange()">Произвольный период</button>
+{#                <button type="button" class="btn btn-info" v-on:click="showSelectCustomRange()">Произвольный период#}
+{#                </button>#}
             </div>
             <div class="btn-group mr-2" role="group" aria-label="Search group">
-                <button type="button" class="btn btn-info" v-on:click="showSearchTag()">
-                    Поиск по слову
+{#                <button type="button" class="btn btn-info" v-on:click="showSearchTag()">#}
+{#                    Поиск по слову#}
+{#                </button>#}
+                <button type="button" class="btn btn-info" v-on:click="showSelectCustomRange()">Произвольный период
                 </button>
             </div>
         </div>
@@ -155,33 +170,33 @@
                 </div>
             </div>
         </div>
-        <div class="modal fade" id="tagSearchModal" tabindex="-1" role="dialog"
-             aria-labelledby="exampleModalLongTitle" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLongTitle">Поиск</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="wrapper">
-                            <input type="text" @change="onSearchChange()" v-model="searchText" class="form-control"
-                                   placeholder="Поиск...">
-                            <div v-for="tag in tagList" v-if="loadingSearch===false">
-                                <div class="card">
-                                    <a href="#" onClick="return false;" v-on:click="openTagFromSearch(tag.id)">
-                                        ${tag.text}
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="loading" v-if="loadingSearch===true">Загрузка&#8230;</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+{#        <div class="modal fade" id="tagSearchModal" tabindex="-1" role="dialog"#}
+{#             aria-labelledby="exampleModalLongTitle" aria-hidden="true">#}
+{#            <div class="modal-dialog" role="document">#}
+{#                <div class="modal-content">#}
+{#                    <div class="modal-header">#}
+{#                        <h5 class="modal-title" id="exampleModalLongTitle">Поиск</h5>#}
+{#                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">#}
+{#                            <span aria-hidden="true">&times;</span>#}
+{#                        </button>#}
+{#                    </div>#}
+{#                    <div class="modal-body">#}
+{#                        <div class="wrapper">#}
+{#                            <input type="text" @change="onSearchChange()" v-model="searchText" class="form-control"#}
+{#                                   placeholder="Поиск...">#}
+{#                            <div v-for="tag in tagList" v-if="loadingSearch===false">#}
+{#                                <div class="card">#}
+{#                                    <a href="#" onClick="return false;" v-on:click="openTagFromSearch(tag.id)">#}
+{#                                        ${tag.text}#}
+{#                                    </a>#}
+{#                                </div>#}
+{#                            </div>#}
+{#                            <div class="loading" v-if="loadingSearch===true">Загрузка&#8230;</div>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
         <div class="modal fade" id="customRangeForGraphModal" tabindex="-1" role="dialog"
              aria-labelledby="exampleModalLongTitle" aria-hidden="true">
             <div class="modal-dialog" role="document">
@@ -255,10 +270,12 @@
         data: {
             tags: [],
             tagList: [],
+            tagListMain: [],
             loading: false,
             loadingGraph: false,
             loadingQuestions: false,
             loadingSearch: false,
+            loadingSearchMain: false,
             currentTag: {},
             search: '',
             chartData: [],
@@ -286,6 +303,7 @@
                 {#{value: 'idf', text: 'IDF'},#}
             ],
             searchText: '',
+            searchTextMain: '',
         },
         mounted: function () {
             this.period = 'now 1-d';
@@ -459,6 +477,10 @@
                 this.getTags()
             },
             onSearchChange: function () {
+                if (this.searchText.length === 0) {
+                    this.tagList = [];
+                    return;
+                }
                 this.loadingSearch = true;
                 this.$http.get(`/tags-search/`, {
                     params: {
@@ -471,6 +493,26 @@
                     })
                     .catch((err) => {
                         this.loadingSearch = false;
+                        console.log(err);
+                    });
+            },
+            onSearchChangeMain: function () {
+                if (this.searchTextMain.length === 0) {
+                    this.tagListMain = [];
+                    return;
+                }
+                this.loadingSearchMain = true;
+                this.$http.get(`/tags-search/`, {
+                    params: {
+                        searchText: this.searchTextMain
+                    }
+                })
+                    .then((response) => {
+                        this.tagListMain = response.data;
+                        this.loadingSearchMain = false;
+                    })
+                    .catch((err) => {
+                        this.loadingSearchMain = false;
                         console.log(err);
                     });
             }
