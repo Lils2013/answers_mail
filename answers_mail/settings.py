@@ -25,7 +25,7 @@ SECRET_KEY = '15^h7*h%nkpxbme!2x-nw(evctqbgeecu08t()@_ubz(v8p4v%'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = [u'127.0.0.1', u'localhost', u'95.163.251.229', u'79.137.175.239']
+ALLOWED_HOSTS = [u'127.0.0.1', u'localhost', u'95.163.251.229', u'79.137.175.239', u'www.otvet-mail-trends.ru', u'otvet-mail-trends.ru']
 
 
 # Application definition

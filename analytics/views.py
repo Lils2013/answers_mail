@@ -165,11 +165,19 @@ def graphs(request):
         return Response({'status': 500, 'error': 'incorrect catid'})
 
     # points per days
-    ppd = {0: 0.1, 1: 24, 7: 6, 30: 1, 365: 0.05}
+    ppd = {0: 0.1, 1: 24, 7: 6, 30: 1, 365: 0.1}
 
     start_date, end_date, days = parse_date(time_interval)
-    if days is None or ppd.get(days) is None:
+    if days is None or (ppd.get(days) is None and days < 60):
         points_per_day = 1
+    elif ppd.get(days) is None and (60 <= days < 90):
+        points_per_day = 0.5
+    elif ppd.get(days) is None and (90 <= days < 180):
+        points_per_day = 0.4
+    elif ppd.get(days) is None and (180 <= days < 360):
+        points_per_day = 0.2
+    elif ppd.get(days) is None and days >= 360:
+        points_per_day = 0.1
     else:
         points_per_day = ppd[days]
 
