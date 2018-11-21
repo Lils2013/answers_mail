@@ -126,8 +126,12 @@ def tokenize_me(input_text):
     tokens = [t for t in normalized_tokens if t not in stop_words]
     tokens = set(tokens)
     bigrams = ngrams(tokens,2)
-    for k1,k2 in cntr(bigrams):
-        tokens.add(k1+" "+k2)
+    for k1, k2 in cntr(bigrams):
+        if k1 < k2:
+            tokens.add(k1 + " " + k2)
+        else:
+            tokens.add(k2 + " " + k1)
+
     return tokens
 
 
