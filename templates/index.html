@@ -19,12 +19,16 @@
             word-wrap: break-word;
         }
     </style>
+    <!-- Add this to <head> -->
+    <link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap/dist/css/bootstrap.min.css"/>
+    <link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.css"/>
 </head>
 <body>
 <div id="starting">
     <div class="container">
         <h1>
             <p class="text-center">Тренды Ответы Mail.Ru</p>
+            <p class="text-center">Узнайте, что волнует ваших соседей</p>
         </h1>
         <div class="wrapper">
             <input type="text" @change="onSearchChangeMain()" v-model="searchTextMain" class="form-control"
@@ -38,8 +42,51 @@
             </div>
             <div class="loading" v-if="loadingSearchMain===true">Загрузка&#8230;</div>
         </div>
+        <br/>
+        <p class="text-center">Примеры</p>
+        <div>
+            <b-carousel id="carousel1"
+                        style="text-shadow: 1px 1px 2px #333; width: 700px; margin: 0 auto;"
+                        controls
+                        indicators
+                        background="#ababab"
+                        :interval="12000"
+                        v-model="slide"
+                        @sliding-start="onSlideStart"
+                        @sliding-end="onSlideEnd"
+            >
+                <!-- Slides with custom text -->
+                <b-carousel-slide>
+                    <img slot="img" class="d-block mx-auto" width="517" height="200"
+                         src="https://psv4.userapi.com/c848232/u8767085/docs/d7/3e148fdb8a8f/Snimok_ekrana_2018-11-22_v_15_18_05.png"
+                         alt="image slot">
+                    <a style="color: #ffffff" href="#" v-on:click="getTagForDemo()">Динамика популярности, с 30 июля
+                        2018 года по 22 ноября 2018
+                        года</a>
+                </b-carousel-slide>
+                <b-carousel-slide>
+                    <img slot="img" class="d-block mx-auto" width="517" height="200"
+                         src="https://psv4.userapi.com/c848228/u8767085/docs/d18/f64dc01dec80/Snimok_ekrana_2018-11-22_v_1_59_58.png"
+                         alt="image slot">
+                    <a style="color: #ffffff" href="#" v-on:click="getTagForDemo()">Динамика популярности, с 30 июля
+                        2018 года по 21 ноября 2018
+                        года</a>
+                </b-carousel-slide>
+                <b-carousel-slide>
+                    <img slot="img" class="d-block mx-auto" width="517" height="200"
+                         src="https://psv4.userapi.com/c848220/u8767085/docs/d13/7db8b8e10529/Snimok_ekrana_2018-11-22_v_14_00_13.png"
+                         alt="image slot">
+                    <a style="color: #ffffff" href="#" v-on:click="getTagForDemo()">Динамика популярности, с 30 июля
+                        2018 года по 22 ноября 2018
+                        года</a>
+                </b-carousel-slide>
+            </b-carousel>
+            <p class="mt-4">
+                Slide #: ${ slide }
+            </p>
+        </div>
         <h1>
-            <p class="text-center">Популярные темы за ${ getText(period) }</p>
+            <p class="text-center">Популярное за ${ getText(period) }</p>
         </h1>
         <div class="btn-toolbar btn-group-justified" role="toolbar" aria-label="Toolbar with button groups">
             <div class="btn-group mr-2" role="group" aria-label="First group">
@@ -54,13 +101,8 @@
                 <button type="button" class="btn btn-info" v-on:click="updateRange('now 7-d')">За неделю</button>
                 <button type="button" class="btn btn-info" v-on:click="updateRange('now 1-m')">За месяц</button>
                 <button type="button" class="btn btn-info" v-on:click="updateRange('now 1-y')">За год</button>
-{#                <button type="button" class="btn btn-info" v-on:click="showSelectCustomRange()">Произвольный период#}
-{#                </button>#}
             </div>
             <div class="btn-group mr-2" role="group" aria-label="Search group">
-{#                <button type="button" class="btn btn-info" v-on:click="showSearchTag()">#}
-{#                    Поиск по слову#}
-{#                </button>#}
                 <button type="button" class="btn btn-info" v-on:click="showSelectCustomRange()">Произвольный период
                 </button>
             </div>
@@ -83,7 +125,6 @@
                 <th scope="row">${tag.questions_count}</th>
                 <th scope="row">
                     <a href="#" v-on:click="getTag(tag.id)">${tag.text}</a>
-                    {#                    <button class="btn btn-info" v-on:click="getTag(tag.id)">View Details</button>#}
                 </th>
             </tr>
             </tbody>
@@ -170,33 +211,6 @@
                 </div>
             </div>
         </div>
-{#        <div class="modal fade" id="tagSearchModal" tabindex="-1" role="dialog"#}
-{#             aria-labelledby="exampleModalLongTitle" aria-hidden="true">#}
-{#            <div class="modal-dialog" role="document">#}
-{#                <div class="modal-content">#}
-{#                    <div class="modal-header">#}
-{#                        <h5 class="modal-title" id="exampleModalLongTitle">Поиск</h5>#}
-{#                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">#}
-{#                            <span aria-hidden="true">&times;</span>#}
-{#                        </button>#}
-{#                    </div>#}
-{#                    <div class="modal-body">#}
-{#                        <div class="wrapper">#}
-{#                            <input type="text" @change="onSearchChange()" v-model="searchText" class="form-control"#}
-{#                                   placeholder="Поиск...">#}
-{#                            <div v-for="tag in tagList" v-if="loadingSearch===false">#}
-{#                                <div class="card">#}
-{#                                    <a href="#" onClick="return false;" v-on:click="openTagFromSearch(tag.id)">#}
-{#                                        ${tag.text}#}
-{#                                    </a>#}
-{#                                </div>#}
-{#                            </div>#}
-{#                            <div class="loading" v-if="loadingSearch===true">Загрузка&#8230;</div>#}
-{#                        </div>#}
-{#                    </div>#}
-{#                </div>#}
-{#            </div>#}
-{#        </div>#}
         <div class="modal fade" id="customRangeForGraphModal" tabindex="-1" role="dialog"
              aria-labelledby="exampleModalLongTitle" aria-hidden="true">
             <div class="modal-dialog" role="document">
@@ -263,6 +277,10 @@
 <script src="https://unpkg.com/chart.js@2.7.2/dist/Chart.bundle.js"></script>
 <script src="https://unpkg.com/vue-chartkick@0.5.0"></script>
 <script src='https://unpkg.com/v-calendar'></script>
+
+<!-- Add this after vue.js -->
+<script src="https://unpkg.com/babel-polyfill@latest/dist/polyfill.min.js"></script>
+<script src="https://unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
 <script type="text/javascript">
     new Vue({
         el: '#starting',
@@ -304,6 +322,8 @@
             ],
             searchText: '',
             searchTextMain: '',
+            slide: 0,
+            sliding: null,
         },
         mounted: function () {
             this.period = 'now 1-d';
@@ -375,6 +395,25 @@
                 this.selectedSortType = 'qcount';
                 $("#tagDetailsModal").modal('show');
                 this.periodForGraph = this.period;
+                this.getQuestions();
+                this.getGraphForMultipleTags();
+            },
+            getTagForDemo: function () {
+                this.loadingGraph = true;
+                this.loadingQuestions = true;
+                if (this.slide === 0) {
+                    this.currentTagsIdsOnChart = [2700];
+                } else if (this.slide === 1) {
+                    this.currentTagsIdsOnChart = [23888, 20793];
+                } else if (this.slide === 2) {
+                    this.currentTagsIdsOnChart = [257382, 498785];
+                }
+                this.loadingGraph = true;
+                this.loadingQuestions = true;
+                this.selectedCategoryForGraph = null;
+                this.selectedSortType = 'qcount';
+                $("#tagDetailsModal").modal('show');
+                this.periodForGraph = '2018-07-29T21:00:00.000Z 2018-11-21T21:00:00.000Z';
                 this.getQuestions();
                 this.getGraphForMultipleTags();
             },
@@ -515,6 +554,12 @@
                         this.loadingSearchMain = false;
                         console.log(err);
                     });
+            },
+            onSlideStart(slide) {
+                this.sliding = true
+            },
+            onSlideEnd(slide) {
+                this.sliding = false
             }
         }
     });
