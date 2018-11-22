@@ -35,7 +35,7 @@
                    placeholder="Укажите тему для вопросов">
             <div v-for="tag in tagListMain" v-if="loadingSearchMain===false">
                 <div class="card">
-                    <a href="#" onClick="return false;" v-on:click="openTagFromSearch(tag.id)">
+                    <a href="#" onClick="return false;" v-on:click="getTagFromSearchOnMain(tag.id)">
                         ${tag.text}
                     </a>
                 </div>
@@ -395,6 +395,18 @@
                 this.getQuestions();
                 this.getGraphForMultipleTags();
             },
+            getTagFromSearchOnMain: function (id) {
+                this.loadingGraph = true;
+                this.loadingQuestions = true;
+                this.currentTag = id;
+                this.currentTagsIdsOnChart = [this.currentTag];
+                this.selectedCategoryForGraph = null;
+                this.selectedSortType = 'qcount';
+                $("#tagDetailsModal").modal('show');
+                this.periodForGraph = this.period;
+                this.getQuestions();
+                this.getGraphForMultipleTags();
+            },
             getTagForDemo: function () {
                 this.loadingGraph = true;
                 this.loadingQuestions = true;
@@ -456,13 +468,6 @@
             showSelectCustomRangeForGraph: function () {
                 $("#customRangeForGraphModal").modal('show');
                 this.selectedDates = null;
-            },
-            showSearchTag: function () {
-                $("#tagSearchModal").modal('show');
-            },
-            openTagFromSearch: function (id) {
-                $("#tagSearchModal").modal('hide');
-                this.getTag(id);
             },
             selectCustomRangeForGraph: function () {
                 this.loadingGraph = true;
