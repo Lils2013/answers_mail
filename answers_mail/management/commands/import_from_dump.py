@@ -16,7 +16,7 @@ tag_m = {} # {text: {id:int, questions:[id1, id2, ...], created_at: str} }
 counter_m = {} # {category_id: {tag_text:{ datetime:{count: int} } }
 
 # минимальное количество вопросов, которые должны ссылаться на тег, чтобы он был сохранён в бд
-tag_min_frequency = 10
+tag_min_frequency = 3
 
 
 def ram_save_question(qdata):
@@ -178,7 +178,7 @@ class Command(BaseCommand):
             start_t = datetime.now()
             last_date = datetime.now()
 
-            start_id = 46553
+            start_id = 0
             for i, line in enumerate(tsvfile):
                 if i < start_id:
                     continue
