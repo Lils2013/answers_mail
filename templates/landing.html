@@ -71,7 +71,6 @@
 
 <nav class="navbar fixed-top navbar-light bg-primary">
   <a class="navbar-brand" href="#">
-{#    <img src="https://img.imgsmail.ru/pkgs/otvet/static/i/images/logo_v2/logo.png" width="220" height="30" alt="">#}
     <img src="http://i68.tinypic.com/t8qads.png" width="220" height="30" alt="">
   </a>
 
@@ -129,7 +128,7 @@
                 <div class="loading" v-if="loadingGraph===true">Загрузка&#8230;</div>
                 <line-chart v-if="loadingGraph===false" :points="false" :data="exampleChartData2"></line-chart>
                 <div class="carousel-caption d-none d-md-block">
-                    <h5> Пора готовиться к новому году?</h5>
+                    <h5> Какой артист на большем хайпе?</h5>
 {#                    <p>...</p>#}
                 </div>
             </div>
@@ -137,7 +136,7 @@
                 <div class="loading" v-if="loadingGraph===true">Загрузка&#8230;</div>
                 <line-chart v-if="loadingGraph===false" :points="false" :data="exampleChartData3"></line-chart>
                 <div class="carousel-caption d-none d-md-block">
-                    <h5> Пора готовиться к новому году?</h5>
+                    <h5> Чем занимаются школьники на каникулах?</h5>
 {#                    <p>...</p>#}
                 </div>
             </div>
@@ -345,9 +344,6 @@
             },
             getGraphForMultipleTags: function () {
                 this.loadingGraph = true;
-                 console.log(this.currentTagsIdsOnChart);
-                 console.log(this.periodForGraph);
-                 console.log(this.selectedCategoryForGraph);
                 this.$http.get(`/graph/`, {
                     params: {
                         tags: this.currentTagsIdsOnChart,
@@ -469,12 +465,9 @@
 
             getLandingGraph: function () {
                 this.loadingGraph = true;
-                 console.log(this.currentTagsIdsOnChart);
-                 console.log(this.periodForGraph);
-                 console.log(this.selectedCategoryForGraph);
                 this.$http.get(`/graph/`, {
                     params: {
-                        tags: [1381],
+                        tags: [2700],
                         date: "now 1-y",
                         catid: null
                     }
@@ -486,11 +479,11 @@
                     .catch((err) => {
                         this.loadingGraph = false;
                         console.log(err);
-                    })
+                    });
 
                 this.$http.get(`/graph/`, {
                     params: {
-                        tags: [1381],
+                        tags: [102812, 10171],
                         date: "now 1-y",
                         catid: null
                     }
@@ -502,11 +495,11 @@
                     .catch((err) => {
                         this.loadingGraph = false;
                         console.log(err);
-                    })
+                    });
 
                 this.$http.get(`/graph/`, {
                     params: {
-                        tags: [1381],
+                        tags: [19420, 90],
                         date: "now 1-y",
                         catid: null
                     }

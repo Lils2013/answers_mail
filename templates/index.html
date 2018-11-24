@@ -42,46 +42,6 @@
             </div>
             <div class="loading" v-if="loadingSearchMain===true">Загрузка&#8230;</div>
         </div>
-        <br/>
-        <p class="text-center">Примеры</p>
-        <div>
-            <b-carousel id="carousel1"
-                        style="text-shadow: 1px 1px 2px #333; width: 700px; margin: 0 auto;"
-                        controls
-                        indicators
-                        background="#ababab"
-                        :interval="12000"
-                        v-model="slide"
-                        @sliding-start="onSlideStart"
-                        @sliding-end="onSlideEnd"
-            >
-                <!-- Slides with custom text -->
-                <b-carousel-slide>
-                    <img slot="img" class="d-block mx-auto" width="517" height="200"
-                         src="http://oi67.tinypic.com/14b2ce0.jpg"
-                         alt="image slot">
-                    <a style="color: #ffffff" href="#" v-on:click="getTagForDemo()">Динамика популярности, с 30 июля
-                        2018 года по 22 ноября 2018
-                        года</a>
-                </b-carousel-slide>
-                <b-carousel-slide>
-                    <img slot="img" class="d-block mx-auto" width="517" height="200"
-                         src="http://oi65.tinypic.com/11avgae.jpg"
-                         alt="image slot">
-                    <a style="color: #ffffff" href="#" v-on:click="getTagForDemo()">Динамика популярности, с 30 июля
-                        2018 года по 21 ноября 2018
-                        года</a>
-                </b-carousel-slide>
-                <b-carousel-slide>
-                    <img slot="img" class="d-block mx-auto" width="517" height="200"
-                         src="http://oi67.tinypic.com/1f915f.jpg"
-                         alt="image slot">
-                    <a style="color: #ffffff" href="#" v-on:click="getTagForDemo()">Динамика популярности, с 30 июля
-                        2018 года по 22 ноября 2018
-                        года</a>
-                </b-carousel-slide>
-            </b-carousel>
-        </div>
         <h1>
             <p class="text-center">Популярное за ${ getText(period) }</p>
         </h1>
