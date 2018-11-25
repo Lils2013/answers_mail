@@ -57,15 +57,13 @@
             background-position: 0 30px;
         }
 
-        .bg-shade {
-            z-index: 1;
-            background: rgba(0, 0, 0, 0.5);
-            width: 100%;
-            height: 100vh;
-            background-size: cover;
-            background-position: 0 30px;
+        .grey-bg {
+            background: #F5F5F5;
         }
 
+        body {
+            background: #E7E7E7;
+        }
     </style>
 </head>
 <body>
@@ -75,104 +73,114 @@
 
 <div id="starting">
 
-    <div class="bg-cover">
-        <div class="bg-shade">
-            <div style="min-height: 25vh"></div>
-            <div class="container " style="color: white;">
-                <div class="row" style="margin-top: 2em">
-                    <div class="col-12 ">
-                        <p class="land-text-big">Узнайте, что <br> сейчас в тренде</p>
+    <div style="min-height: 65px"></div>
+    <div class="container ">
+        <div class="row d-flex justify-content-center">
+            <div class="col-9">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Поиск</h5>
+
+                        <input type="text" @change="onSearchChangeMain()" v-model="searchTextMain"
+                               class="form-control grey-bg"
+                               placeholder="Укажите тему для вопросов">
+
+                        <div class="btn-toolbar btn-group-justified" role="toolbar" style="margin-top: 1em"
+                             aria-label="Toolbar with button groups">
+
+
+                            <div class="btn-group mr-2" role="group" aria-label="First group">
+                                {#                                <button type="button" class="btn btn-light" v-on:click="updateRange('now 1-d')"> <i class="fa fa-filter" aria-hidden="true"></i> Фильтры#}
+                                {#                                </button>#}
+                                <select v-model="selectedCategory" @change="onCategoryChange()"
+                                        class="custom-select grey-bg">
+                                    <option v-for="option in options" v-bind:value="option.value">
+                                        ${ option.text }
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="btn-group mr-2" role="group" aria-label="Second group">
+                                <button type="button" class="btn btn-outline-primary"
+                                        v-on:click="updateRange('now 1-d')">День
+                                </button>
+                                <button type="button" class="btn btn-outline-primary"
+                                        v-on:click="updateRange('now 7-d')">Неделя
+                                </button>
+                                <button type="button" class="btn btn-outline-primary"
+                                        v-on:click="updateRange('now 1-m')">Месяц
+                                </button>
+                                <button type="button" class="btn btn-outline-primary"
+                                        v-on:click="updateRange('now 1-y')">Год
+                                </button>
+                            </div>
+                            <div class="btn-group mr-2" role="group" aria-label="Search group">
+                                <button type="button" class="btn btn-link" v-on:click="showSelectCustomRange()">
+                                    <i class="fa fa-clock-o" aria-hidden="true"></i>
+                                    Указать период
+                                </button>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
-                <div class="row" style="margin-top: 2em">
-                    <div class="col-12 land-text">
-                        Ответы.Тренды — аналитическая <br> платформа для оценивания <br> восприятия трендов.
-                    </div>
-                </div>
-                <div class="row" style="margin-top: 2em">
-                    <div class="col-12 ">
-                        <button type="button" class="btn btn-primary btn-lg" v-on:click="gotosite()">Перейти к трендам
-                        </button>
+            </div>
+            <div class="col-9" style="margin-top: 1em;">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title">Популярное за день</h6>
+
+                        <table class="table flextable" v-if="loading===false">
+                            <thead>
+                            <tr>
+                                <th width="20%" scope="col">
+                                    №
+                                </th>
+                                <th width="40%" scope="col">Тренд</th>
+                                <th width="20%" scope="col">
+                                    <select v-model="selectedSortType" @change="onCategoryChange()">
+                                        <option v-for="option in sortTypes" v-bind:value="option.value">
+                                            ${ option.text }
+                                        </option>
+                                    </select>
+                                </th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr v-for="(tag, index) in tags">
+                                <th>${index}</th>
+                                <th scope="row">
+                                    <a href="#" v-on:click="getTag(tag.id)">${tag.text}</a>
+                                </th>
+                                <th scope="row">${tag.questions_count}</th>
+                            </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="d-flex justify-content-around" style="margin-top:2em">
-        <div class="w-75">
-            <div id="demo" class="carousel slide" data-ride="carousel" style="margin-top: 5em;">
-
-                <!-- Indicators -->
-{#                          <ul class="carousel-indicators">#}
-{#                            <li data-target="#demo" data-slide-to="0" class="active"></li>#}
-{#                            <li data-target="#demo" data-slide-to="1"></li>#}
-{#                            <li data-target="#demo" data-slide-to="2"></li>#}
-{#                          </ul>#}
-
-                <!-- The slideshow -->
-                <div class="carousel-inner">
-                    <div class="carousel-item active">
-                        <div class="loading" v-if="loadingGraph===true">Загрузка&#8230;</div>
-                        <line-chart v-if="loadingGraph===false" :points="false" :data="exampleChartData1"></line-chart>
-                        <div class="carousel-caption d-none d-md-block">
-                            <h5> Пора готовиться к новому году?</h5>
-                        </div>
-                    </div>
-                    <div class="carousel-item">
-                        <div class="loading" v-if="loadingGraph2===true">Загрузка&#8230;</div>
-                        <line-chart v-if="loadingGraph2===false" :points="false" :data="exampleChartData2"></line-chart>
-                        <div class="carousel-caption d-none d-md-block">
-                            <h5> Какой артист на большем хайпе?</h5>
-                        </div>
-                    </div>
-                    <div class="carousel-item">
-                        <div class="loading" v-if="loadingGraph3===true">Загрузка&#8230;</div>
-                        <line-chart v-if="loadingGraph3===false" :points="false" :data="exampleChartData3"></line-chart>
-                        <div class="carousel-caption d-none d-md-block">
-                            <h5> Какие интересы имеют схожую динамику?</h5>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Left and right controls -->
-                <a class="carousel-control-prev" href="#demo" data-slide="prev">
-                    <span class="carousel-control-prev-icon"></span>
-                </a>
-                <a class="carousel-control-next" href="#demo" data-slide="next">
-                    <span class="carousel-control-next-icon"></span>
-                </a>
-
-            </div>
-        </div>
-    </div>
-
-
-    <div style="margin-top: 2em;">
-        <p class="text-center">
-            Динамические графики трендов Ответов@Mail.Ru помогут понять, <br>
-            чем интересуются люди по всей России
-        </p>
-    </div>
-
-    <div class="bg-primary" style="bottom: 0; margin-top: 4em; height: 300px; color:white;">
-        <div style="min-height: 2em"></div>
-        <div class="container">
-            <div class="row" style="margin-top: 2em">
-                <div class="col-12 d-flex justify-content-center">
-                    <h2>Заинтересовались?</h2>
-                </div>
-            </div>
-            <div class="row" style="margin-top: 2em">
-                <div class="col-12 d-flex justify-content-center">
-                    Попробуйте платформу прямо сейчас
-                </div>
-            </div>
-            <div class="row" style="margin-top: 2em">
-                <div class="col-12 d-flex justify-content-center">
-                    <button type="button" class="btn btn-warning btn-lg" v-on:click="gotosite()">Перейти к трендам
-                    </button>
-                </div>
+    <div class="modal fade" id="customRangeModal" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                {#                    <div class="modal-header">#}
+                {#                        <h5 class="modal-title" id="exampleModalLongTitle">Период</h5>#}
+                {#                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">#}
+                {#                            <span aria-hidden="true">&times;</span>#}
+                {#                        </button>#}
+                {#                    </div>#}
+                {#                    <div class="modal-body">#}
+                <v-date-picker
+                        :drag-attribute='dateRangeAttributes'
+                        :select-attribute='dateRangeAttributes' mode='range'
+                        v-model='selectedDates'
+                        :is-inline='isInline'></v-date-picker>
+                <button :disabled="selectedDates==null" class="btn btn-primary"
+                        v-on:click="selectCustomRange()">Выбрать
+                </button>
+                {#                    </div>#}
             </div>
         </div>
     </div>
@@ -204,17 +212,12 @@
             tagListMain: [],
             loading: false,
             loadingGraph: false,
-            loadingGraph2: false,
-            loadingGraph3: false,
             loadingQuestions: false,
             loadingSearch: false,
             loadingSearchMain: false,
             currentTag: {},
             search: '',
             chartData: [],
-            exampleChartData1: [],
-            exampleChartData2: [],
-            exampleChartData3: [],
             questions: [],
             period: '',
             periodForGraph: '',
@@ -240,12 +243,13 @@
             ],
             searchText: '',
             searchTextMain: '',
+            slide: 0,
+            sliding: null,
         },
         mounted: function () {
             this.period = 'now 1-d';
             this.getCategories();
             this.getTags();
-            this.getLandingGraph();
         },
         methods: {
             getText: function (period) {
@@ -315,6 +319,37 @@
                 this.getQuestions();
                 this.getGraphForMultipleTags();
             },
+            getTagFromSearchOnMain: function (id) {
+                this.loadingGraph = true;
+                this.loadingQuestions = true;
+                this.currentTag = id;
+                this.currentTagsIdsOnChart = [this.currentTag];
+                this.selectedCategoryForGraph = null;
+                this.selectedSortType = 'qcount';
+                $("#tagDetailsModal").modal('show');
+                this.periodForGraph = 'now 1-d';
+                this.getQuestions();
+                this.getGraphForMultipleTags();
+            },
+            getTagForDemo: function () {
+                this.loadingGraph = true;
+                this.loadingQuestions = true;
+                if (this.slide === 0) {
+                    this.currentTagsIdsOnChart = [2700];
+                } else if (this.slide === 1) {
+                    this.currentTagsIdsOnChart = [23888, 20793];
+                } else if (this.slide === 2) {
+                    this.currentTagsIdsOnChart = [257382, 498785];
+                }
+                this.loadingGraph = true;
+                this.loadingQuestions = true;
+                this.selectedCategoryForGraph = null;
+                this.selectedSortType = 'qcount';
+                $("#tagDetailsModal").modal('show');
+                this.periodForGraph = '2018-07-29T21:00:00.000Z 2018-11-21T21:00:00.000Z';
+                this.getQuestions();
+                this.getGraphForMultipleTags();
+            },
             getQuestions: function () {
                 this.loadingQuestions = true;
                 this.$http.get(`/questions/`, {
@@ -357,13 +392,6 @@
             showSelectCustomRangeForGraph: function () {
                 $("#customRangeForGraphModal").modal('show');
                 this.selectedDates = null;
-            },
-            showSearchTag: function () {
-                $("#tagSearchModal").modal('show');
-            },
-            openTagFromSearch: function (id) {
-                $("#tagSearchModal").modal('hide');
-                this.getTag(id);
             },
             selectCustomRangeForGraph: function () {
                 this.loadingGraph = true;
@@ -453,65 +481,15 @@
                         console.log(err);
                     });
             },
-
-            getLandingGraph: function () {
-                this.loadingGraph = true;
-                this.loadingGraph2 = true;
-                this.loadingGraph3 = true;
-                this.$http.get(`/graph/`, {
-                    params: {
-                        tags: [2700],
-                        date: "now 1-y",
-                        catid: null
-                    }
-                })
-                    .then((response) => {
-                        this.exampleChartData1 = response.data;
-                        this.loadingGraph = false;
-                    })
-                    .catch((err) => {
-                        this.loadingGraph = false;
-                        console.log(err);
-                    });
-
-                this.$http.get(`/graph/`, {
-                    params: {
-                        tags: [102812, 10171],
-                        date: "now 1-y",
-                        catid: null
-                    }
-                })
-                    .then((response) => {
-                        this.exampleChartData2 = response.data;
-                        this.loadingGraph2 = false;
-                    })
-                    .catch((err) => {
-                        this.loadingGraph2 = false;
-                        console.log(err);
-                    });
-
-                this.$http.get(`/graph/`, {
-                    params: {
-                        tags: [19420, 90],
-                        date: "now 1-y",
-                        catid: null
-                    }
-                })
-                    .then((response) => {
-                        this.exampleChartData3 = response.data;
-                        this.loadingGraph3 = false;
-                    })
-                    .catch((err) => {
-                        this.loadingGraph3 = false;
-                        console.log(err);
-                    })
+            onSlideStart(slide) {
+                this.sliding = true
             },
-
-            gotosite() {
-                window.location.href = "../";
-            },
+            onSlideEnd(slide) {
+                this.sliding = false
+            }
         }
     });
+
 </script>
 </body>
 </html>
