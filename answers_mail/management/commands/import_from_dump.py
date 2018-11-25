@@ -189,6 +189,8 @@ class Command(BaseCommand):
 
             start_id = 0
             for i, line in enumerate(tsvfile):
+                print(i)
+                print(line)
                 if i < start_id:
                     continue
                 line_data = re.split('\t', line)
