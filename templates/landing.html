@@ -21,11 +21,12 @@
         .carousel-control-prev {
             left: -20%;
         }
-        .carousel-control-next{
+
+        .carousel-control-next {
             right: -20%;
         }
 
-        .carousel-caption{
+        .carousel-caption {
             top: 10%;
             color: black;
         }
@@ -70,9 +71,9 @@
 <body>
 
 <nav class="navbar fixed-top navbar-light bg-primary">
-  <a class="navbar-brand" href="#">
-    <img src="http://i68.tinypic.com/t8qads.png" width="220" height="30" alt="">
-  </a>
+    <a class="navbar-brand" href="#">
+        <img src="http://i68.tinypic.com/t8qads.png" width="220" height="30" alt="">
+    </a>
 
 </nav>
 
@@ -104,91 +105,83 @@
 
     <div class="d-flex justify-content-around" style="margin-top:2em">
         <div class="w-75">
-        <div id="demo" class="carousel slide" data-ride="carousel" style="margin-top: 5em;">
+            <div id="demo" class="carousel slide" data-ride="carousel" style="margin-top: 5em;">
 
-          <!-- Indicators -->
-{#          <ul class="carousel-indicators">#}
-{#            <li data-target="#demo" data-slide-to="0" class="active"></li>#}
-{#            <li data-target="#demo" data-slide-to="1"></li>#}
-{#            <li data-target="#demo" data-slide-to="2"></li>#}
-{#          </ul>#}
+                <!-- Indicators -->
+{#                          <ul class="carousel-indicators">#}
+{#                            <li data-target="#demo" data-slide-to="0" class="active"></li>#}
+{#                            <li data-target="#demo" data-slide-to="1"></li>#}
+{#                            <li data-target="#demo" data-slide-to="2"></li>#}
+{#                          </ul>#}
 
-          <!-- The slideshow -->
-          <div class="carousel-inner">
-            <div class="carousel-item active">
-                <div class="loading" v-if="loadingGraph===true">Загрузка&#8230;</div>
-                <line-chart v-if="loadingGraph===false" :points="false" :data="exampleChartData1"></line-chart>
-                <div class="carousel-caption d-none d-md-block">
-                    <h5> Пора готовиться к новому году?</h5>
-{#                    <p>...</p>#}
+                <!-- The slideshow -->
+                <div class="carousel-inner">
+                    <div class="carousel-item active">
+                        <div class="loading" v-if="loadingGraph===true">Загрузка&#8230;</div>
+                        <line-chart v-if="loadingGraph===false" :points="false" :data="exampleChartData1"></line-chart>
+                        <div class="carousel-caption d-none d-md-block">
+                            <h5> Пора готовиться к новому году?</h5>
+                        </div>
+                    </div>
+                    <div class="carousel-item">
+                        <div class="loading" v-if="loadingGraph2===true">Загрузка&#8230;</div>
+                        <line-chart v-if="loadingGraph2===false" :points="false" :data="exampleChartData2"></line-chart>
+                        <div class="carousel-caption d-none d-md-block">
+                            <h5> Какой артист на большем хайпе?</h5>
+                        </div>
+                    </div>
+                    <div class="carousel-item">
+                        <div class="loading" v-if="loadingGraph3===true">Загрузка&#8230;</div>
+                        <line-chart v-if="loadingGraph3===false" :points="false" :data="exampleChartData3"></line-chart>
+                        <div class="carousel-caption d-none d-md-block">
+                            <h5> Какие интересы имеют схожую динамику?</h5>
+                        </div>
+                    </div>
                 </div>
-{#              <img src="https://images.pexels.com/photos/248797/pexels-photo-248797.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Los Angeles">#}
-            </div>
-            <div class="carousel-item">
-                <div class="loading" v-if="loadingGraph2===true">Загрузка&#8230;</div>
-                <line-chart v-if="loadingGraph2===false" :points="false" :data="exampleChartData2"></line-chart>
-                <div class="carousel-caption d-none d-md-block">
-                    <h5> Какой артист на большем хайпе?</h5>
-{#                    <p>...</p>#}
-                </div>
-            </div>
-            <div class="carousel-item">
-                <div class="loading" v-if="loadingGraph3===true">Загрузка&#8230;</div>
-                <line-chart v-if="loadingGraph3===false" :points="false" :data="exampleChartData3"></line-chart>
-                <div class="carousel-caption d-none d-md-block">
-                    <h5> Какие интересы имеют схожую динамику?</h5>
-{#                    <p>...</p>#}
-                </div>
-            </div>
-          </div>
 
-          <!-- Left and right controls -->
-          <a class="carousel-control-prev" href="#demo" data-slide="prev">
-            <span class="carousel-control-prev-icon"></span>
-          </a>
-          <a class="carousel-control-next" href="#demo" data-slide="next">
-            <span class="carousel-control-next-icon"></span>
-          </a>
+                <!-- Left and right controls -->
+                <a class="carousel-control-prev" href="#demo" data-slide="prev">
+                    <span class="carousel-control-prev-icon"></span>
+                </a>
+                <a class="carousel-control-next" href="#demo" data-slide="next">
+                    <span class="carousel-control-next-icon"></span>
+                </a>
 
+            </div>
         </div>
-        </div>
-        </div>
+    </div>
 
 
     <div style="margin-top: 2em;">
         <p class="text-center">
-        Динамические графики трендов Ответов@Mail.Ru помогут понять, <br>
+            Динамические графики трендов Ответов@Mail.Ru помогут понять, <br>
             чем интересуются люди по всей России
         </p>
     </div>
 
     <div class="bg-primary" style="bottom: 0; margin-top: 4em; height: 300px; color:white;">
-        <div style="min-height: 2em"> </div>
-         <div class="container">
-             <div class="row" style="margin-top: 2em">
-                 <div class="col-12 d-flex justify-content-center">
-                     <h2>Заинтересовались?</h2>
-                 </div>
-             </div>
-             <div class="row" style="margin-top: 2em">
+        <div style="min-height: 2em"></div>
+        <div class="container">
+            <div class="row" style="margin-top: 2em">
                 <div class="col-12 d-flex justify-content-center">
-                     Попробуйте платформу прямо сейчас
+                    <h2>Заинтересовались?</h2>
                 </div>
             </div>
-                 <div class="row" style="margin-top: 2em">
+            <div class="row" style="margin-top: 2em">
                 <div class="col-12 d-flex justify-content-center">
-                    <button type="button" class="btn btn-warning btn-lg" v-on:click="gotosite()">Перейти к трендам</button>
+                    Попробуйте платформу прямо сейчас
+                </div>
+            </div>
+            <div class="row" style="margin-top: 2em">
+                <div class="col-12 d-flex justify-content-center">
+                    <button type="button" class="btn btn-warning btn-lg" v-on:click="gotosite()">Перейти к трендам
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
 </div>
-
-  <!-- Content here -->
-
-
-
 
 <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
         integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
@@ -518,9 +511,9 @@
                     })
             },
 
-            gotosite(){
+            gotosite() {
                 window.location.href = "../";
-            }
+            },
         }
     });
 </script>
