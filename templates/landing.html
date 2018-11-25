@@ -125,18 +125,18 @@
 {#              <img src="https://images.pexels.com/photos/248797/pexels-photo-248797.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940" alt="Los Angeles">#}
             </div>
             <div class="carousel-item">
-                <div class="loading" v-if="loadingGraph===true">Загрузка&#8230;</div>
-                <line-chart v-if="loadingGraph===false" :points="false" :data="exampleChartData2"></line-chart>
+                <div class="loading" v-if="loadingGraph2===true">Загрузка&#8230;</div>
+                <line-chart v-if="loadingGraph2===false" :points="false" :data="exampleChartData2"></line-chart>
                 <div class="carousel-caption d-none d-md-block">
                     <h5> Какой артист на большем хайпе?</h5>
 {#                    <p>...</p>#}
                 </div>
             </div>
             <div class="carousel-item">
-                <div class="loading" v-if="loadingGraph===true">Загрузка&#8230;</div>
-                <line-chart v-if="loadingGraph===false" :points="false" :data="exampleChartData3"></line-chart>
+                <div class="loading" v-if="loadingGraph3===true">Загрузка&#8230;</div>
+                <line-chart v-if="loadingGraph3===false" :points="false" :data="exampleChartData3"></line-chart>
                 <div class="carousel-caption d-none d-md-block">
-                    <h5> Чем занимаются школьники на каникулах?</h5>
+                    <h5> Какие интересы имеют схожую динамику?</h5>
 {#                    <p>...</p>#}
                 </div>
             </div>
@@ -215,6 +215,8 @@
             tagListMain: [],
             loading: false,
             loadingGraph: false,
+            loadingGraph2: false,
+            loadingGraph3: false,
             loadingQuestions: false,
             loadingSearch: false,
             loadingSearchMain: false,
@@ -465,6 +467,8 @@
 
             getLandingGraph: function () {
                 this.loadingGraph = true;
+                this.loadingGraph2 = true;
+                this.loadingGraph3 = true;
                 this.$http.get(`/graph/`, {
                     params: {
                         tags: [2700],
@@ -490,10 +494,10 @@
                 })
                     .then((response) => {
                         this.exampleChartData2 = response.data;
-                        this.loadingGraph = false;
+                        this.loadingGraph2 = false;
                     })
                     .catch((err) => {
-                        this.loadingGraph = false;
+                        this.loadingGraph2 = false;
                         console.log(err);
                     });
 
@@ -506,10 +510,10 @@
                 })
                     .then((response) => {
                         this.exampleChartData3 = response.data;
-                        this.loadingGraph = false;
+                        this.loadingGraph3 = false;
                     })
                     .catch((err) => {
-                        this.loadingGraph = false;
+                        this.loadingGraph3 = false;
                         console.log(err);
                     })
             },
