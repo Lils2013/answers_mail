@@ -64,6 +64,15 @@
         body {
             background: #E7E7E7;
         }
+
+        .modal {
+            overflow: auto !important;
+        }
+
+        .flextable {
+            table-layout: fixed;
+            word-wrap: break-word;
+        }
     </style>
 </head>
 <body>
@@ -74,7 +83,7 @@
 <div id="starting">
 
     <div style="min-height: 65px"></div>
-    <div class="container ">
+    <div class="container">
         <div class="row d-flex justify-content-center">
             <div class="col-9">
                 <div class="card">
@@ -85,13 +94,19 @@
                                class="form-control grey-bg"
                                placeholder="Укажите тему для вопросов">
 
+                        <div v-for="tag in tagListMain" v-if="loadingSearchMain===false">
+                            <div class="card">
+                                <a href="#" onClick="return false;" v-on:click="getTagFromSearchOnMain(tag.id)">
+                                    ${tag.text}
+                                </a>
+                            </div>
+                        </div>
+                        <div class="loading" v-if="loadingSearchMain===true">Загрузка&#8230;</div>
+
                         <div class="btn-toolbar btn-group-justified" role="toolbar" style="margin-top: 1em"
                              aria-label="Toolbar with button groups">
 
-
                             <div class="btn-group mr-2" role="group" aria-label="First group">
-                                {#                                <button type="button" class="btn btn-light" v-on:click="updateRange('now 1-d')"> <i class="fa fa-filter" aria-hidden="true"></i> Фильтры#}
-                                {#                                </button>#}
                                 <select v-model="selectedCategory" @change="onCategoryChange()"
                                         class="custom-select grey-bg">
                                     <option v-for="option in options" v-bind:value="option.value">
@@ -101,7 +116,7 @@
                             </div>
                             <div class="btn-group mr-2" role="group" aria-label="Second group">
                                 <button type="button" class="btn btn-outline-primary"
-                                        v-on:click="updateRange('now 1-d')">День
+                                        v-on:click="updateRange('now 1-d')">Сегодня
                                 </button>
                                 <button type="button" class="btn btn-outline-primary"
                                         v-on:click="updateRange('now 7-d')">Неделя
@@ -147,7 +162,7 @@
                             </thead>
                             <tbody>
                             <tr v-for="(tag, index) in tags">
-                                <th>${index}</th>
+                                <th>${index + 1}</th>
                                 <th scope="row">
                                     <a href="#" v-on:click="getTag(tag.id)">${tag.text}</a>
                                 </th>
@@ -155,23 +170,139 @@
                             </tr>
                             </tbody>
                         </table>
+                        <div class="loading" v-if="loading===true">Загрузка&#8230;</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <div class="modal fade" id="tagDetailsModal" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                {#                <div class="modal-header">#}
+                {#                    <h5 class="modal-title" id="exampleModalLongTitle">Аналитика</h5>#}
+                {#                    <button type="button" class="close"#}
+                {#                            data-dismiss="modal" aria-label="Close">#}
+                {#                        <span aria-hidden="true">&times;</span>#}
+                {#                    </button>#}
+                {#                </div>#}
+                <div class="modal-body">
+                    <div class="container">
+                        <div class="row d-flex justify-content-center">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5>Динамика популярности</h5>
+                                        <div class="loading" v-if="loadingGraph===true">Загрузка&#8230;</div>
+                                        <line-chart v-if="loadingGraph===false" :points="false"
+                                                    :data="chartData"></line-chart>
+                                        <div class="btn-toolbar btn-group-justified" role="toolbar"
+                                             style="margin-top: 1em"
+                                             aria-label="Toolbar with button groups">
+
+                                            <div class="btn-group mr-2" role="group" aria-label="First group">
+                                                <button class="btn btn-primary" v-on:click="compare()">Сравнить
+                                                </button>
+                                            </div>
+                                            <div class="btn-group mr-2" role="group" aria-label="Second group">
+                                                <button type="button" class="btn btn-outline-primary"
+                                                        v-on:click="updateRangeForGraph('now 1-d')">Сегодня
+                                                </button>
+                                                <button type="button" class="btn btn-outline-primary"
+                                                        v-on:click="updateRangeForGraph('now 7-d')">Неделя
+                                                </button>
+                                                <button type="button" class="btn btn-outline-primary"
+                                                        v-on:click="updateRangeForGraph('now 1-m')">Месяц
+                                                </button>
+                                                <button type="button" class="btn btn-outline-primary"
+                                                        v-on:click="updateRangeForGraph('now 1-y')">Год
+                                                </button>
+                                            </div>
+                                            <div class="btn-group mr-2" role="group" aria-label="Search group">
+                                                <button type="button" class="btn btn-link"
+                                                        v-on:click="showSelectCustomRangeForGraph()">
+                                                    <i class="fa fa-clock-o" aria-hidden="true"></i>
+                                                    Указать период
+                                                </button>
+                                            </div>
+                                            <div class="btn-group mr-2" role="group" aria-label="Select group">
+                                                <select v-model="selectedCategoryForGraph"
+                                                        @change="onCategoryChangeForGraph()"
+                                                        class="custom-select grey-bg">
+                                                    <option v-for="option in options" v-bind:value="option.value">
+                                                        ${ option.text }
+                                                    </option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12" style="margin-top: 1em;">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5>Вопросы по тренду</h5>
+                                        <div class="loading" v-if="loadingQuestions===true">Загрузка&#8230;</div>
+                                        <table class="table flextable" v-if="loadingQuestions===false">
+                                            <thead>
+                                            <tr>
+                                                <th width="10%" scope="col">№</th>
+                                                <th width="20%" scope="col">Идентификатор</th>
+                                                <th width="70%" scope="col">Текст вопроса</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            <tr v-for="(question, index) in questions">
+                                                <td>${index + 1}</td>
+                                                <th scope="row">
+                                                    <a :href="toQuestion(question.id)">${question.id}</a>
+                                                </th>
+                                                <td>${getTextTrunc(question.text)}</td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="tagCompareModal" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle">Сравнение</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="wrapper">
+                        <input type="text" @change="onSearchChange()" v-model="searchText" class="form-control"
+                               placeholder="Поиск...">
+                        <div v-for="tag in tagList" v-if="loadingSearch===false">
+                            <div class="card" v-if="currentTagsIdsOnChart.indexOf(tag.id) === -1">
+                                <a href="#" onClick="return false;" v-on:click="addToGraph(tag.id)">
+                                    ${tag.text}
+                                </a>
+                            </div>
+                        </div>
+                        <div class="loading" v-if="loadingSearch===true">Загрузка&#8230;</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="modal fade" id="customRangeModal" tabindex="-1" role="dialog"
          aria-labelledby="exampleModalLongTitle" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
-                {#                    <div class="modal-header">#}
-                {#                        <h5 class="modal-title" id="exampleModalLongTitle">Период</h5>#}
-                {#                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">#}
-                {#                            <span aria-hidden="true">&times;</span>#}
-                {#                        </button>#}
-                {#                    </div>#}
-                {#                    <div class="modal-body">#}
                 <v-date-picker
                         :drag-attribute='dateRangeAttributes'
                         :select-attribute='dateRangeAttributes' mode='range'
@@ -180,11 +311,24 @@
                 <button :disabled="selectedDates==null" class="btn btn-primary"
                         v-on:click="selectCustomRange()">Выбрать
                 </button>
-                {#                    </div>#}
             </div>
         </div>
     </div>
-
+    <div class="modal fade" id="customRangeForGraphModal" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <v-date-picker
+                        :drag-attribute='dateRangeAttributes'
+                        :select-attribute='dateRangeAttributes' mode='range'
+                        v-model='selectedDates'
+                        :is-inline='isInline'></v-date-picker>
+                <button :disabled="selectedDates==null" class="btn btn-info"
+                        v-on:click="selectCustomRangeForGraph()">Выбрать
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
@@ -486,7 +630,10 @@
             },
             onSlideEnd(slide) {
                 this.sliding = false
-            }
+            },
+            getTextTrunc(text) {
+                return text.length > 100 ? text.substring(0, 100) + '...' : text;
+            },
         }
     });
 

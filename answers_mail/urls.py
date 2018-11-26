@@ -23,9 +23,9 @@ from .routers import router
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^api/', include(router.urls)),
-    url(r'^$', TemplateView.as_view(template_name='index.html')),
-    url(r'^landing$', TemplateView.as_view(template_name='landing.html')),
-    url(r'^trends', TemplateView.as_view(template_name='trends.html')),
+    url(r'^trends-old$', TemplateView.as_view(template_name='index.html')),
+    url(r'^$', TemplateView.as_view(template_name='landing.html')),
+    url(r'^trends$', TemplateView.as_view(template_name='trends.html')),
     # url(r'^import/$', import_from_api_view),
     # url(r'^import_from_dump/$', import_from_dump),
     # url(r'^import/(?P<page_from>\d+)$', import_from_api_view),
