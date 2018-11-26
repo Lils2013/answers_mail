@@ -249,14 +249,12 @@
                                         <table class="table flextable" v-if="loadingQuestions===false">
                                             <thead>
                                             <tr>
-                                                <th width="10%" scope="col">№</th>
-                                                <th width="20%" scope="col">id</th>
+                                                <th width="30%" scope="col">id</th>
                                                 <th width="70%" scope="col">Вопрос</th>
                                             </tr>
                                             </thead>
                                             <tbody>
-                                            <tr v-for="(question, index) in questions">
-                                                <td>${index + 1}</td>
+                                            <tr v-for="question in questions">
                                                 <th scope="row">
                                                     <a :href="toQuestion(question.id)">${question.id}</a>
                                                 </th>
