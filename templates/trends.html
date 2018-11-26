@@ -85,7 +85,7 @@
     <div style="min-height: 65px"></div>
     <div class="container">
         <div class="row d-flex justify-content-center">
-            <div class="col-9">
+            <div class="col-12">
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Поиск</h5>
@@ -139,10 +139,10 @@
                     </div>
                 </div>
             </div>
-            <div class="col-9" style="margin-top: 1em;">
+            <div class="col-12" style="margin-top: 1em;">
                 <div class="card">
                     <div class="card-body">
-                        <h6 class="card-title">Популярное за день</h6>
+                        <h6 class="card-title">Популярное за ${ getText(period) }</h6>
 
                         <table class="table flextable" v-if="loading===false">
                             <thead>
@@ -152,11 +152,12 @@
                                 </th>
                                 <th width="40%" scope="col">Тренд</th>
                                 <th width="20%" scope="col">
-                                    <select v-model="selectedSortType" @change="onCategoryChange()">
-                                        <option v-for="option in sortTypes" v-bind:value="option.value">
-                                            ${ option.text }
-                                        </option>
-                                    </select>
+                                    Количество вопросов
+{#                                    <select v-model="selectedSortType" @change="onCategoryChange()">#}
+{#                                        <option v-for="option in sortTypes" v-bind:value="option.value">#}
+{#                                            ${ option.text }#}
+{#                                        </option>#}
+{#                                    </select>#}
                                 </th>
                             </tr>
                             </thead>
@@ -192,8 +193,8 @@
                     <div class="container">
                         <div class="row d-flex justify-content-center">
                             <div class="col-12">
-                                <div class="card">
-                                    <div class="card-body">
+{#                                <div class="card">#}
+{#                                    <div class="card-body">#}
                                         <h5>Динамика популярности</h5>
                                         <div class="loading" v-if="loadingGraph===true">Загрузка&#8230;</div>
                                         <line-chart v-if="loadingGraph===false" :points="false"
@@ -236,21 +237,23 @@
                                                     </option>
                                                 </select>
                                             </div>
-                                        </div>
-                                    </div>
+{#                                        </div>#}
+{#                                    </div>#}
                                 </div>
+                                <hr/>
                             </div>
+
                             <div class="col-12" style="margin-top: 1em;">
-                                <div class="card">
-                                    <div class="card-body">
+{#                                <div class="card">#}
+{#                                    <div class="card-body">#}
                                         <h5>Вопросы по тренду</h5>
                                         <div class="loading" v-if="loadingQuestions===true">Загрузка&#8230;</div>
                                         <table class="table flextable" v-if="loadingQuestions===false">
                                             <thead>
                                             <tr>
                                                 <th width="10%" scope="col">№</th>
-                                                <th width="20%" scope="col">Идентификатор</th>
-                                                <th width="70%" scope="col">Текст вопроса</th>
+                                                <th width="20%" scope="col">id</th>
+                                                <th width="70%" scope="col">Вопрос</th>
                                             </tr>
                                             </thead>
                                             <tbody>
@@ -263,8 +266,8 @@
                                             </tr>
                                             </tbody>
                                         </table>
-                                    </div>
-                                </div>
+{#                                    </div>#}
+{#                                </div>#}
                             </div>
                         </div>
                     </div>
