@@ -103,10 +103,10 @@
                         </div>
                         <div class="loading" v-if="loadingSearchMain===true">Загрузка&#8230;</div>
 
-                        <div class="btn-toolbar btn-group-justified" role="toolbar" style="margin-top: 1em"
+                        <div class="btn-toolbar btn-group-justified" role="toolbar"
                              aria-label="Toolbar with button groups">
 
-                            <div class="btn-group mr-2" role="group" aria-label="First group">
+                            <div class="btn-group mr-2" role="group" aria-label="First group" style="margin-top: 0.2em">
                                 <select v-model="selectedCategory" @change="onCategoryChange()"
                                         class="custom-select grey-bg">
                                     <option v-for="option in options" v-bind:value="option.value">
@@ -114,7 +114,8 @@
                                     </option>
                                 </select>
                             </div>
-                            <div class="btn-group mr-2" role="group" aria-label="Second group">
+
+                            <div class="btn-group mr-2" role="group" aria-label="Second group" style="margin-top: 0.2em">
                                 <button type="button" class="btn btn-outline-primary"
                                         v-on:click="updateRange('now 1-d')">Сегодня
                                 </button>
@@ -128,7 +129,7 @@
                                         v-on:click="updateRange('now 1-y')">Год
                                 </button>
                             </div>
-                            <div class="btn-group mr-2" role="group" aria-label="Search group">
+                            <div class="btn-group mr-2" role="group" aria-label="Search group" style="margin-top: 0.2em">
                                 <button type="button" class="btn btn-link" v-on:click="showSelectCustomRange()">
                                     <i class="fa fa-clock-o" aria-hidden="true"></i>
                                     Указать период
@@ -198,14 +199,13 @@
                                         <line-chart v-if="loadingGraph===false" :points="false"
                                                     :data="chartData"></line-chart>
                                         <div class="btn-toolbar btn-group-justified" role="toolbar"
-                                             style="margin-top: 1em"
                                              aria-label="Toolbar with button groups">
 
-                                            <div class="btn-group mr-2" role="group" aria-label="First group">
+                                            <div class="btn-group mr-2" role="group" aria-label="First group" style="margin-top: 0.2em">
                                                 <button class="btn btn-primary" v-on:click="compare()">Сравнить
                                                 </button>
                                             </div>
-                                            <div class="btn-group mr-2" role="group" aria-label="Second group">
+                                            <div class="btn-group mr-2" role="group" aria-label="Second group" style="margin-top: 0.2em">
                                                 <button type="button" class="btn btn-outline-primary"
                                                         v-on:click="updateRangeForGraph('now 1-d')">Сегодня
                                                 </button>
@@ -219,14 +219,14 @@
                                                         v-on:click="updateRangeForGraph('now 1-y')">Год
                                                 </button>
                                             </div>
-                                            <div class="btn-group mr-2" role="group" aria-label="Search group">
+                                            <div class="btn-group mr-2" role="group" aria-label="Search group" style="margin-top: 0.2em">
                                                 <button type="button" class="btn btn-link"
                                                         v-on:click="showSelectCustomRangeForGraph()">
                                                     <i class="fa fa-clock-o" aria-hidden="true"></i>
                                                     Указать период
                                                 </button>
                                             </div>
-                                            <div class="btn-group mr-2" role="group" aria-label="Select group">
+                                            <div class="btn-group mr-2" role="group" aria-label="Select group" style="margin-top: 0.2em">
                                                 <select v-model="selectedCategoryForGraph"
                                                         @change="onCategoryChangeForGraph()"
                                                         class="custom-select grey-bg">
