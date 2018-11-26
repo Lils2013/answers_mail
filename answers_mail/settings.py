@@ -81,8 +81,8 @@ WSGI_APPLICATION = 'answers_mail.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'answers_mail',
-        'USER': 'answers',
+        'NAME': 'answers_mail_2',
+        'USER': 'answers_2',
         'PASSWORD': 'q12345678',
         'HOST': 'localhost',
         'PORT': '',
