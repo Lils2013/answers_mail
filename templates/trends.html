@@ -85,7 +85,7 @@
     <div style="min-height: 65px"></div>
     <div class="container">
         <div class="row d-flex justify-content-center">
-            <div class="col-12">
+            <div class="col-12 col-md-9">
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Поиск</h5>
@@ -135,15 +135,13 @@
                                 </button>
                             </div>
                         </div>
-
                     </div>
                 </div>
             </div>
-            <div class="col-12" style="margin-top: 1em;">
+            <div class="col-12 col-md-9" style="margin-top: 1em;">
                 <div class="card">
                     <div class="card-body">
                         <h6 class="card-title">Популярное за ${ getText(period) }</h6>
-
                         <table class="table flextable" v-if="loading===false">
                             <thead>
                             <tr>
@@ -183,7 +181,7 @@
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLongTitle">Аналитика</h5>
+                    <h5 class="modal-title" id="exampleModalLongTitle">Аналитика по трендам ${getCurrentTagsNames()}</h5>
                     <button type="button" class="close"
                             data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -636,6 +634,13 @@
             },
             getTextTrunc(text) {
                 return text.length > 100 ? text.substring(0, 100) + '...' : text;
+            },
+            getCurrentTagsNames() {
+                var arr = [];
+                for (var i = 0; i < this.chartData.length; i++) {
+                    arr.push(this.chartData[i].name)
+                }
+                return arr.join(", ")
             },
         }
     });
