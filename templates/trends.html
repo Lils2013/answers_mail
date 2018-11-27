@@ -482,10 +482,10 @@
                 this.loadingQuestions = true;
                 this.currentTag = id;
                 this.currentTagsIdsOnChart = [this.currentTag];
-                this.selectedCategoryForGraph = null;
+                this.selectedCategoryForGraph = this.selectedCategory;
                 this.selectedSortType = 'qcount';
                 $("#tagDetailsModal").modal('show');
-                this.periodForGraph = 'now 1-d';
+                this.periodForGraph = this.period;
                 this.getQuestions();
                 this.getGraphForMultipleTags();
             },

@@ -16,7 +16,7 @@ tag_m = {}  # {text: {id:int, questions:[id1, id2, ...], created_at: str} }
 counter_m = {}  # {category_id: {tag_text:{ datetime:{count: int} } }
 
 # минимальное количество вопросов, которые должны ссылаться на тег, чтобы он был сохранён в бд
-tag_min_frequency = 3
+tag_min_frequency = 2
 
 
 def ram_save_question(qdata):
