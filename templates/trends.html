@@ -194,7 +194,7 @@
                             <div class="col-12">
 {#                                <div class="card">#}
 {#                                    <div class="card-body">#}
-                                        <h5>Динамика популярности за ${ getText(periodForGraph) }</h5>
+                                        <h5>Динамика популярности за ${ getTextForGraph(periodForGraph) }</h5>
                                         <div class="loading" v-if="loadingGraph===true">Загрузка&#8230;</div>
                                         <line-chart v-if="loadingGraph===false" :points="false"
                                                     :data="chartData"></line-chart>
@@ -320,7 +320,7 @@
                 <v-date-picker
                         :drag-attribute='dateRangeAttributes'
                         :select-attribute='dateRangeAttributes' mode='range'
-                        v-model='selectedDates'
+                        v-model='selectedDatesForGraph'
                         :is-inline='isInline'></v-date-picker>
                 <button :disabled="selectedDates==null" class="btn btn-info"
                         v-on:click="selectCustomRangeForGraph()">Выбрать
@@ -366,6 +366,7 @@
             periodForGraph: '',
             currentTagsIdsOnChart: [],
             selectedDates: null,
+            selectedDatesForGraph: null,
             datePickerModel: null,
             dateRangeAttributes: {
                 popover: {
@@ -406,6 +407,19 @@
                     return 'последний год';
                 else if (this.selectedDates != null)
                     return this.selectedDates.start.toLocaleDateString() + " - " + this.selectedDates.end.toLocaleDateString();
+                return period;
+            },
+            getTextForGraph: function (period) {
+                if (period == 'now 1-d')
+                    return 'последний день';
+                else if (period == 'now 7-d')
+                    return 'последнюю неделю';
+                else if (period == 'now 1-m')
+                    return 'последний месяц';
+                else if (period == 'now 1-y')
+                    return 'последний год';
+                else if (this.selectedDatesForGraph != null)
+                    return this.selectedDatesForGraph.start.toLocaleDateString() + " - " + this.selectedDatesForGraph.end.toLocaleDateString();
                 return period;
             },
             getTags: function () {
@@ -459,6 +473,7 @@
                 this.selectedSortType = 'qcount';
                 $("#tagDetailsModal").modal('show');
                 this.periodForGraph = this.period;
+                this.selectedDatesForGraph = this.selectedDates;
                 this.getQuestions();
                 this.getGraphForMultipleTags();
             },
@@ -471,25 +486,6 @@
                 this.selectedSortType = 'qcount';
                 $("#tagDetailsModal").modal('show');
                 this.periodForGraph = 'now 1-d';
-                this.getQuestions();
-                this.getGraphForMultipleTags();
-            },
-            getTagForDemo: function () {
-                this.loadingGraph = true;
-                this.loadingQuestions = true;
-                if (this.slide === 0) {
-                    this.currentTagsIdsOnChart = [2700];
-                } else if (this.slide === 1) {
-                    this.currentTagsIdsOnChart = [23888, 20793];
-                } else if (this.slide === 2) {
-                    this.currentTagsIdsOnChart = [257382, 498785];
-                }
-                this.loadingGraph = true;
-                this.loadingQuestions = true;
-                this.selectedCategoryForGraph = null;
-                this.selectedSortType = 'qcount';
-                $("#tagDetailsModal").modal('show');
-                this.periodForGraph = '2018-07-29T21:00:00.000Z 2018-11-21T21:00:00.000Z';
                 this.getQuestions();
                 this.getGraphForMultipleTags();
             },
@@ -534,12 +530,12 @@
             },
             showSelectCustomRangeForGraph: function () {
                 $("#customRangeForGraphModal").modal('show');
-                this.selectedDates = null;
+                this.selectedDatesForGraph = null;
             },
             selectCustomRangeForGraph: function () {
                 this.loadingGraph = true;
                 $("#customRangeForGraphModal").modal('hide');
-                this.periodForGraph = this.selectedDates.start.toISOString() + " " + this.selectedDates.end.toISOString();
+                this.periodForGraph = this.selectedDatesForGraph.start.toISOString() + " " + this.selectedDatesForGraph.end.toISOString();
                 this.getGraphForMultipleTags();
                 this.getQuestions();
             },
