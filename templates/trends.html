@@ -322,7 +322,7 @@
                         :select-attribute='dateRangeAttributes' mode='range'
                         v-model='selectedDatesForGraph'
                         :is-inline='isInline'></v-date-picker>
-                <button :disabled="selectedDates==null" class="btn btn-info"
+                <button :disabled="selectedDatesForGraph==null" class="btn btn-info"
                         v-on:click="selectCustomRangeForGraph()">Выбрать
                 </button>
             </div>
