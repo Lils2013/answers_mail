@@ -149,17 +149,17 @@
 {#                        </div>#}
                     </div>
                     <div class="carousel-item">
-                        <div class="loading" v-if="loadingGraph2===true">Загрузка&#8230;</div>
                         <div class="d-flex justify-content-center">
                              <h5> <p class="text-center">Какой артист на большем хайпе?</p> </h5>
                         </div>
+                        <div class="loading" v-if="loadingGraph2===true"><i class="preloader"></i></div>
                         <line-chart v-if="loadingGraph2===false" :points="false" :data="exampleChartData2"></line-chart>
                     </div>
                     <div class="carousel-item">
-                        <div class="loading" v-if="loadingGraph3===true">Загрузка&#8230;</div>
                         <div class="d-flex justify-content-center">
                              <h5> <p class="text-center"> Кто был футбольным героем минувшего чемпионата? </p> </h5>
                         </div>
+                        <div class="loading" v-if="loadingGraph3===true"><i class="preloader"></i></div>
                         <line-chart v-if="loadingGraph3===false" :points="false" :data="exampleChartData3"></line-chart>
                     </div>
                 </div>
