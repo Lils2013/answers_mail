@@ -29,6 +29,7 @@
         .carousel-caption {
             top: 10%;
             color: black;
+            z-index: -1;
         }
 
         .land-text-big {
@@ -36,7 +37,7 @@
             font-style: normal;
             font-weight: bold;
             line-height: normal;
-            font-size: 68px;
+            font-size: 5vw;
             color: #FFFFFF;
         }
 
@@ -44,8 +45,16 @@
             font-family: Merriweather;
             font-style: normal;
             font-weight: normal;
-            line-height: 40px;
-            font-size: 24px;
+            font-size: 2.5vw;
+        }
+
+        @media screen and (max-width: 576px) {
+            .land-text-big {
+                font-size: 30px;
+            }
+            .land-text {
+                font-size: 15px;
+            }
         }
 
         .bg-cover {
@@ -64,6 +73,23 @@
             height: 100vh;
             background-size: cover;
             background-position: 0 30px;
+        }
+
+        html, body {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        .preloader {
+            position: absolute;
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: #fff url(https://img.imgsmail.ru/pkgs/otvet/static/i/images/preloader.gif) no-repeat 50% 50%;
+            z-index: 5;
+            top: 0;
+            left: 0;
+{#            opacity: .85;#}
         }
 
     </style>
@@ -99,9 +125,9 @@
         </div>
     </div>
 
-    <div class="d-flex justify-content-around" style="margin-top:2em">
+    <div class="d-flex justify-content-around">
         <div class="w-75">
-            <div id="demo" class="carousel slide" data-ride="carousel" style="margin-top: 5em;">
+            <div id="demo" class="carousel slide" data-ride="carousel" style="margin-top: 5em;" data-interval="false">
 
                 <!-- Indicators -->
 {#                          <ul class="carousel-indicators">#}
@@ -113,25 +139,28 @@
                 <!-- The slideshow -->
                 <div class="carousel-inner">
                     <div class="carousel-item active">
-                        <div class="loading" v-if="loadingGraph===true">Загрузка&#8230;</div>
-                        <line-chart v-if="loadingGraph===false" :points="false" :data="exampleChartData1"></line-chart>
-                        <div class="carousel-caption d-none d-md-block">
-                            <h5> Пора готовиться к новому году?</h5>
+                        <div class="d-flex justify-content-center">
+                            <h5><p class="text-center"> Пора готовиться к новому году? </p></h5>
                         </div>
+                        <div class="loading" v-if="loadingGraph===true"><i class="preloader"></i></div>
+                        <line-chart v-if="loadingGraph===false" :points="false" :data="exampleChartData1"></line-chart>
+{#                        <div class="carousel-caption d-none d-md-block">#}
+{#                            <h5> Пора готовиться к новому году?</h5>#}
+{#                        </div>#}
                     </div>
                     <div class="carousel-item">
                         <div class="loading" v-if="loadingGraph2===true">Загрузка&#8230;</div>
-                        <line-chart v-if="loadingGraph2===false" :points="false" :data="exampleChartData2"></line-chart>
-                        <div class="carousel-caption d-none d-md-block">
-                            <h5> Какой артист на большем хайпе?</h5>
+                        <div class="d-flex justify-content-center">
+                             <h5> <p class="text-center">Какой артист на большем хайпе?</p> </h5>
                         </div>
+                        <line-chart v-if="loadingGraph2===false" :points="false" :data="exampleChartData2"></line-chart>
                     </div>
                     <div class="carousel-item">
                         <div class="loading" v-if="loadingGraph3===true">Загрузка&#8230;</div>
-                        <line-chart v-if="loadingGraph3===false" :points="false" :data="exampleChartData3"></line-chart>
-                        <div class="carousel-caption d-none d-md-block">
-                            <h5> Кто был футбольным героем минувшего чемпионата?</h5>
+                        <div class="d-flex justify-content-center">
+                             <h5> <p class="text-center"> Кто был футбольным героем минувшего чемпионата? </p> </h5>
                         </div>
+                        <line-chart v-if="loadingGraph3===false" :points="false" :data="exampleChartData3"></line-chart>
                     </div>
                 </div>
 
@@ -462,6 +491,8 @@
                     params: {
                         tags: [2700],
                         date: "now 6-m",
+{#                        tags: [1159],#}
+{#                        date: "2017-12-28T01:00:00.000Z 2018-01-17T21:00:00.000Z",#}
                         catid: null
                     }
                 })
