@@ -467,6 +467,7 @@
             getTag: function (id) {
                 this.loadingGraph = true;
                 this.loadingQuestions = true;
+                this.chartData = [];
                 this.currentTag = id;
                 this.currentTagsIdsOnChart = [this.currentTag];
                 this.selectedCategoryForGraph = this.selectedCategory;
@@ -480,12 +481,14 @@
             getTagFromSearchOnMain: function (id) {
                 this.loadingGraph = true;
                 this.loadingQuestions = true;
+                this.chartData = [];
                 this.currentTag = id;
                 this.currentTagsIdsOnChart = [this.currentTag];
                 this.selectedCategoryForGraph = this.selectedCategory;
                 this.selectedSortType = 'qcount';
                 $("#tagDetailsModal").modal('show');
                 this.periodForGraph = this.period;
+                this.selectedDatesForGraph = this.selectedDates;
                 this.getQuestions();
                 this.getGraphForMultipleTags();
             },

@@ -84,6 +84,9 @@ def parse_date(time_interval):
         elif time_interval == 'now 1-m':
             start_date = end_date - timedelta(days=30)
             days = 30
+        elif time_interval == 'now 6-m':
+            start_date = end_date - timedelta(days=180)
+            days = 180
         elif time_interval == 'now 1-y':
             start_date = end_date - timedelta(days=365)
             days = 365
@@ -165,7 +168,7 @@ def graphs(request):
         return Response({'status': 500, 'error': 'incorrect catid'})
 
     # points per days
-    ppd = {0: 0.1, 1: 24, 7: 6, 30: 1, 365: 0.1}
+    ppd = {0: 0.1, 1: 24, 7: 6, 30: 1, 180: 0.4, 365: 0.1}
 
     start_date, end_date, days = parse_date(time_interval)
     if days is None or (ppd.get(days) is None and days < 60):
