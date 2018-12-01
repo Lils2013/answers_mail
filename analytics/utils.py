@@ -25,7 +25,7 @@ morph = pymorphy2.MorphAnalyzer()
 stemmer = SnowballStemmer("russian")
 stop_words = nltk.corpus.stopwords.words('russian')
 # '' for python 2.7 only
-stop_words.extend([u'хотеть', u'1', u'2', u'3', u'4', u'5', u'6', u'7', u'8', u'9', u'0', u'нужно', u'вопрос', u'как', u'подсказать', u'делать', u'спасибо', u'как', u'мочь', u'такой', u'который', u'ответ', u'помочь', u'пожалуйста', u'очень', u'почему', u'что', u'это', u'так', u'вот', u'быть', u'какой', u'в', u'—',
+stop_words.extend([u'хотеть', u'1', u'2', u'3', u'4', u'5', u'6', u'7', u'8', u'9', u'0', u'нужно', u'вопрос', u'как', u'подсказать', u'делать', u'как', u'мочь', u'такой', u'который', u'ответ', u'очень', u'что', u'это', u'так', u'вот', u'быть', u'какой', u'в', u'—',
      u'к', u'на', u'`', u'``', u'.', u'...', u'..', "''"])
 stop_words = set(stop_words)
 punctuation = set(string.punctuation)
