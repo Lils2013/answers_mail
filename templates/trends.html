@@ -55,18 +55,9 @@
                     <div class="card-body">
                         <h5 class="card-title">Поиск</h5>
 
-                        <input type="text" @change="onSearchChangeMain()" v-model="searchTextMain"
+                        <input type="text" v-on:keyup.13="onSearchChangeMain()" v-model="searchTextMain"
                                class="form-control grey-bg"
                                placeholder="Укажите тему для вопросов">
-
-                        <div v-for="tag in tagListMain" v-if="loadingSearchMain===false">
-                            <div class="card">
-                                <a href="#" onClick="return false;" v-on:click="getTagFromSearchOnMain(tag.id)">
-                                    ${tag.text}
-                                </a>
-                            </div>
-                        </div>
-                        <div class="loading" v-if="loadingSearchMain===true">Загрузка&#8230;</div>
 
                         <div class="btn-toolbar btn-group-justified" role="toolbar"
                              aria-label="Toolbar with button groups">
@@ -107,40 +98,70 @@
             <div class="col-12 col-md-9" style="margin-top: 1em;">
                 <div class="card">
                     <div class="card-body">
-                        <h6 class="card-title">Популярное за ${ getText(period) }</h6>
-                        <div style="margin-top: 2em; margin-bottom: 2em" v-if="loading===true">
-                            <div class="loading d-flex justify-content-center" ><i class="preloader"></i></div>
+                        <div v-if="tagListMain.length != 0">
+                            <h5 class="card-title">Результаты поиска</h5>
+                            <div style="margin-top: 2em; margin-bottom: 2em" v-if="loadingSearchMain===true">
+                                <div class="loading d-flex justify-content-center"><i class="preloader"></i></div>
+                            </div>
+                            <table class="table flextable" v-if="loadingSearchMain===false">
+                                <thead>
+                                <tr>
+                                    <th width="20%" scope="col">
+                                        №
+                                    </th>
+                                    <th width="40%" scope="col">Тренд</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-for="(tag, index) in tagListMain">
+                                    <th>${index + 1}</th>
+                                    <th scope="row">
+                                        <a href="#" onClick="return false;" v-on:click="getTagFromSearchOnMain(tag.id)">
+                                            ${tag.text}
+                                        </a>
+                                    </th>
+                                </tr>
+                                </tbody>
+                            </table>
                         </div>
-                        <table class="table flextable" v-if="loading===false">
-                            <thead>
-                            <tr>
-                                <th width="20%" scope="col">
-                                    №
-                                </th>
-                                <th width="40%" scope="col">Тренд</th>
-                                <th width="20%" scope="col">
-                                    Количество вопросов
-{#                                    <select v-model="selectedSortType" @change="onCategoryChange()">#}
-{#                                        <option v-for="option in sortTypes" v-bind:value="option.value">#}
-{#                                            ${ option.text }#}
-{#                                        </option>#}
-{#                                    </select>#}
-                                </th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr v-for="(tag, index) in tags">
-                                <th>${index + 1}</th>
-                                <th scope="row">
-                                    <a href="#" v-on:click="getTag(tag.id)">${tag.text}</a>
-                                </th>
-                                <th scope="row">${tag.questions_count}</th>
-                            </tr>
-                            </tbody>
-                        </table>
-{#                        <div class="loading" v-if="loading===true">Загрузка&#8230;</div>#}
-                        <div style="margin-top: 2em; margin-bottom: 2em" v-if="loadingGraph===true">
-                            <div class="loading d-flex justify-content-center" ><i class="preloader"></i></div>
+
+                        <div v-if="tagListMain.length == 0">
+                            <h5 class="card-title">Популярное за ${ getText(period) }</h5>
+                            <div style="margin-top: 2em; margin-bottom: 2em" v-if="loading===true">
+                                <div class="loading d-flex justify-content-center"><i class="preloader"></i></div>
+                            </div>
+                            <table class="table flextable" v-if="loading===false">
+                                <thead>
+                                <tr>
+                                    <th width="20%" scope="col">
+                                        №
+                                    </th>
+                                    <th width="40%" scope="col">Тренд</th>
+                                    <th width="20%" scope="col">
+                                        Количество вопросов
+                                        {#                                    <select v-model="selectedSortType" @change="onCategoryChange()">#}
+                                        {#                                        <option v-for="option in sortTypes" v-bind:value="option.value">#}
+                                        {#                                            ${ option.text }#}
+                                        {#                                        </option>#}
+                                        {#                                    </select>#}
+                                    </th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr v-for="(tag, index) in tags">
+                                    <th>${index + 1}</th>
+                                    <th scope="row">
+                                        <a href="#" v-on:click="getTag(tag.id)">${tag.text}</a>
+                                    </th>
+                                    <th scope="row">${tag.questions_count}</th>
+                                </tr>
+                                </tbody>
+                            </table>
+                            {#                        <div class="loading" v-if="loading===true">Загрузка&#8230;</div>#}
+                            <div style="margin-top: 2em; margin-bottom: 2em" v-if="loadingGraph===true">
+                                <div class="loading d-flex justify-content-center"><i class="preloader"></i></div>
+                            </div>
+
                         </div>
 
                     </div>
@@ -529,6 +550,7 @@
                 this.selectedDates = null;
             },
             selectCustomRange: function () {
+                this.tagListMain = [];
                 this.loadingGraph = true;
                 $("#customRangeModal").modal('hide');
                 this.period = this.selectedDates.start.toISOString() + " " + this.selectedDates.end.toISOString();
@@ -562,6 +584,7 @@
                 this.getQuestions();
             },
             updateRange: function (period) {
+                this.tagListMain = [];
                 this.period = period;
                 this.getTags()
             },
@@ -586,6 +609,7 @@
                     });
             },
             onSearchChangeMain: function () {
+                document.activeElement.blur();
                 if (this.searchTextMain.length === 0) {
                     this.tagListMain = [];
                     return;
