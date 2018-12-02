@@ -566,6 +566,7 @@
                 this.getTags()
             },
             onSearchChange: function () {
+                 document.activeElement.blur();
                 if (this.searchText.length === 0) {
                     this.tagList = [];
                     return;
@@ -586,6 +587,7 @@
                     });
             },
             onSearchChangeMain: function () {
+                 document.activeElement.blur();
                 if (this.searchTextMain.length === 0) {
                     this.tagListMain = [];
                     return;
