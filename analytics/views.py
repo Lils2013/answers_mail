@@ -256,6 +256,11 @@ def tags(request):
 @api_view(['GET'])
 def tags_search(request):
     search_text = request.GET.get('searchText', None)
+
+    cached_data = get_request_cache("tags_search", [search_text])
+    if cached_data is not None:
+        return Response(cached_data)
+
     try:
         tags = sorted(Tag.objects.all().filter(questions_count__gt=10, text__icontains=search_text),
                       key=lambda i: i.questions_count,
@@ -265,6 +270,7 @@ def tags_search(request):
 
     if request.method == 'GET':
         serializer = TagSerializer(tags[:50], many=True)
+        set_request_cache("tags_search", serializer.data, [search_text])
         return Response(serializer.data)
 
 
